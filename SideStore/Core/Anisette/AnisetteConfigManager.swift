@@ -103,14 +103,20 @@ public actor AnisetteConfigManager {
                 ud.customAnisetteClientInfo = sanitized
             }
         }
+        if let storedUA = ud.customAnisetteUserAgent, !storedUA.isEmpty {
+            let sanitizedUA = AppConstants.Anisette.sanitizedUserAgent(storedUA)
+            if sanitizedUA != storedUA {
+                ud.customAnisetteUserAgent = sanitizedUA
+            }
+        }
 
         if let data = try? Data(contentsOf: configFileURL),
            var config = try? Foundation.JSONDecoder().decode(AnisetteConfig.self, from: data) {
-            let sanitized = AppConstants.Anisette.sanitizedClientInfo(
-                config.clientInfo.isEmpty ? AppConstants.Anisette.defaultClientInfo : config.clientInfo
-            )
-            if sanitized != config.clientInfo {
-                config.clientInfo = sanitized
+            let sanitizedCI = AppConstants.Anisette.sanitizedClientInfo(config.clientInfo)
+            let sanitizedUA = AppConstants.Anisette.sanitizedUserAgent(config.userAgent)
+            if sanitizedCI != config.clientInfo || sanitizedUA != config.userAgent {
+                config.clientInfo = sanitizedCI
+                config.userAgent = sanitizedUA
                 let encoder = Foundation.JSONEncoder()
                 encoder.outputFormatting = .prettyPrinted
                 if let updatedData = try? encoder.encode(config) {
@@ -183,12 +189,19 @@ public actor AnisetteConfigManager {
 
         let rawClientInfo        = (udClientInfo?.isEmpty == false ? udClientInfo : fileConfig?.clientInfo) ?? AppConstants.Anisette.defaultClientInfo
         let resolvedClientInfo   = AppConstants.Anisette.sanitizedClientInfo(rawClientInfo)
-        if resolvedClientInfo != rawClientInfo {
-            if let existing = udClientInfo, !existing.isEmpty {
+        let rawUserAgent         = (udUserAgent?.isEmpty == false ? udUserAgent : fileConfig?.userAgent) ?? AppConstants.Anisette.defaultUserAgent
+        let resolvedUserAgent    = AppConstants.Anisette.sanitizedUserAgent(rawUserAgent)
+        if resolvedClientInfo != rawClientInfo || resolvedUserAgent != rawUserAgent {
+            if let existing = udClientInfo, !existing.isEmpty, resolvedClientInfo != rawClientInfo {
                 ud.customAnisetteClientInfo = resolvedClientInfo
             }
-            if var updatedFileConfig = fileConfig, updatedFileConfig.clientInfo != resolvedClientInfo {
+            if let existingUA = udUserAgent, !existingUA.isEmpty, resolvedUserAgent != rawUserAgent {
+                ud.customAnisetteUserAgent = resolvedUserAgent
+            }
+            if var updatedFileConfig = fileConfig,
+               updatedFileConfig.clientInfo != resolvedClientInfo || updatedFileConfig.userAgent != resolvedUserAgent {
                 updatedFileConfig.clientInfo = resolvedClientInfo
+                updatedFileConfig.userAgent = resolvedUserAgent
                 let encoder = Foundation.JSONEncoder()
                 encoder.outputFormatting = .prettyPrinted
                 if let data = try? encoder.encode(updatedFileConfig) {
@@ -196,7 +209,6 @@ public actor AnisetteConfigManager {
                 }
             }
         }
-        let resolvedUserAgent    = (udUserAgent?.isEmpty == false ? udUserAgent : fileConfig?.userAgent) ?? AppConstants.Anisette.defaultUserAgent
         let resolvedDeviceID     = (udDeviceID?.isEmpty == false ? udDeviceID : fileConfig?.customDeviceID)
         let resolvedLocalUserID  = (udLocalUserID?.isEmpty == false ? udLocalUserID : fileConfig?.customLocalUserID)
         let resolvedLocale       = (udLocale?.isEmpty == false ? udLocale : fileConfig?.customLocale)
@@ -220,12 +232,11 @@ public actor AnisetteConfigManager {
 
     public func makeRequestHeaders() -> AnisetteRequestHeaders {
         let config = loadConfig()
-        let resolvedClientInfo = AppConstants.Anisette.sanitizedClientInfo(
-            config.clientInfo.isEmpty ? AppConstants.Anisette.defaultClientInfo : config.clientInfo
-        )
+        let resolvedClientInfo = AppConstants.Anisette.sanitizedClientInfo(config.clientInfo)
+        let resolvedUserAgent = AppConstants.Anisette.sanitizedUserAgent(config.userAgent)
         return AnisetteRequestHeaders().with {
             $0.clientInfo = resolvedClientInfo
-            $0.userAgent  = config.userAgent.isEmpty ? AppConstants.Anisette.defaultUserAgent : config.userAgent
+            $0.userAgent  = resolvedUserAgent
             if let customLU = config.customLocalUserID, !customLU.isEmpty { $0.localUserID = customLU }
             if let customDev = config.customDeviceID, !customDev.isEmpty { $0.deviceID = customDev }
             if let loc = config.customLocale, !loc.isEmpty { $0.locale = loc }
@@ -241,9 +252,8 @@ public actor AnisetteConfigManager {
     
     public func saveConfig(_ config: AnisetteConfig) {
         var sanitizedConfig = config
-        sanitizedConfig.clientInfo = AppConstants.Anisette.sanitizedClientInfo(
-            config.clientInfo.isEmpty ? AppConstants.Anisette.defaultClientInfo : config.clientInfo
-        )
+        sanitizedConfig.clientInfo = AppConstants.Anisette.sanitizedClientInfo(config.clientInfo)
+        sanitizedConfig.userAgent = AppConstants.Anisette.sanitizedUserAgent(config.userAgent)
         let encoder = Foundation.JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
         if let data = try? encoder.encode(sanitizedConfig) {

@@ -80,6 +80,7 @@ public actor OnDeviceAnisetteManager {
 
         var sanitizedData = anisetteData
         sanitizedData.clientInfo = AppConstants.Anisette.sanitizedClientInfo(sanitizedData.clientInfo)
+        sanitizedData.userAgent = AppConstants.Anisette.sanitizedUserAgent(sanitizedData.userAgent)
 
         debugLog("[OnDeviceAnisetteManager] [Fetch] SUCCESS: AnisetteData generated successfully.")
         return sanitizedData

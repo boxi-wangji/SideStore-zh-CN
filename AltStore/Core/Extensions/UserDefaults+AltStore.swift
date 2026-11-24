@@ -607,14 +607,21 @@ public extension UserDefaults
             UserDefaults.standard.set(true, forKey: zhCNAnisetteV2MigrationKey)
         }
 
-        // SideStore-zh-CN v3: one-time migration to replace rejected `<macOS;` clientInfo
-        // with `<Mac OS X;` so Apple gsa.apple.com does not reject auth requests with HTTP 503.
+        // SideStore-zh-CN v3: one-time migration to align clientInfo & userAgent with
+        // live Remote Server Sync values (`<MacBookPro13,3> <Mac OS X;10.12.6;16G29> ...`
+        // + `akd/1.0 CFNetwork/811.5.4 Darwin/16.7.0`) so Apple gsa.apple.com never returns HTTP 503.
         let zhCNAnisetteV3MigrationKey = "zhCNAnisetteDefaultsV3Applied"
         if !UserDefaults.standard.bool(forKey: zhCNAnisetteV3MigrationKey) {
             if let persistedClientInfo = UserDefaults.standard.customAnisetteClientInfo, !persistedClientInfo.isEmpty {
                 let sanitized = AppConstants.Anisette.sanitizedClientInfo(persistedClientInfo)
                 if sanitized != persistedClientInfo {
                     UserDefaults.standard.customAnisetteClientInfo = sanitized
+                }
+            }
+            if let persistedUA = UserDefaults.standard.customAnisetteUserAgent, !persistedUA.isEmpty {
+                let sanitizedUA = AppConstants.Anisette.sanitizedUserAgent(persistedUA)
+                if sanitizedUA != persistedUA {
+                    UserDefaults.standard.customAnisetteUserAgent = sanitizedUA
                 }
             }
             if let persistedURL = UserDefaults.standard.object(forKey: #keyPath(UserDefaults.menuAnisetteURL)) as? String,

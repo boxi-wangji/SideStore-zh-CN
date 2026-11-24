@@ -20,6 +20,7 @@ enum AnisetteProvider {
             data = try await fetchRemote(handler: handler)
         }
         data.clientInfo = AppConstants.Anisette.sanitizedClientInfo(data.clientInfo)
+        data.userAgent = AppConstants.Anisette.sanitizedUserAgent(data.userAgent)
         return data
     }
 

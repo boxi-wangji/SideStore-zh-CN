@@ -68,16 +68,29 @@ public enum AppConstants {
         public static let defaultODAMetadataURL       = URL(string: "https://zzz.haus/oda.json")!
         public static var defaultODAMetadataURLString: String { defaultODAMetadataURL.absoluteString }
 
+        // Matches live /v3/client_info from mac-ani.jkcoxson.com & new.ani.sidestore.io
+        // (exact values written by Remote Server Sync -> Fetch -> Save as Overrides).
+        public static let defaultClientInfo           = "<MacBookPro13,3> <Mac OS X;10.12.6;16G29> <com.apple.AuthKit/1 (com.apple.akd/1.0)>"
+        public static let defaultUserAgent            = "akd/1.0 CFNetwork/811.5.4 Darwin/16.7.0"
+
         // Apple gsa.apple.com rejects `<macOS;` in X-MMe-Client-Info with HTTP 503; normalize to `<Mac OS X;`.
         public static func sanitizedClientInfo(_ value: String) -> String {
-            value
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty || trimmed == Constants.Anisette.defaultClientInfo {
+                return defaultClientInfo
+            }
+            return value
                 .replacingOccurrences(of: "<macOS;", with: "<Mac OS X;", options: .caseInsensitive)
                 .replacingOccurrences(of: "macOS;", with: "Mac OS X;", options: .caseInsensitive)
         }
 
-        // Proxied from upstream SideSign (normalized for Apple GSA compatibility)
-        public static let defaultClientInfo           = sanitizedClientInfo(Constants.Anisette.defaultClientInfo)
-        public static let defaultUserAgent            = Constants.Anisette.defaultUserAgent
+        public static func sanitizedUserAgent(_ value: String) -> String {
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty || trimmed == Constants.Anisette.defaultUserAgent {
+                return defaultUserAgent
+            }
+            return value
+        }
 
         public enum URLs {
             public static let grandSlamLookup = Constants.Anisette.URLs.grandSlamLookup
