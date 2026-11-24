@@ -551,8 +551,8 @@ public extension UserDefaults
             #keyPath(UserDefaults.menuAnisetteList): AppConstants.Anisette.Servers.defaultSource,
             #keyPath(UserDefaults.menuAnisetteURL): AppConstants.Anisette.Servers.defaultServerURL,
             #keyPath(UserDefaults.isAnisetteOfflineMode): false,
-            #keyPath(UserDefaults.disableAnisetteRotation): false,
-            #keyPath(UserDefaults.useOnDeviceAnisette): true,
+            #keyPath(UserDefaults.disableAnisetteRotation): true,
+            #keyPath(UserDefaults.useOnDeviceAnisette): false,
             #keyPath(UserDefaults.useLocalVPN): true,
             #keyPath(UserDefaults.acceptIPv6ConnectionConfig): false,
             #keyPath(UserDefaults.isAutoRetryRemotePairingPortEnabled): true,
@@ -595,6 +595,17 @@ public extension UserDefaults
         UserDefaults.standard.isDebugModeEnabled = true
         
         UserDefaults.standard.register(defaults: defaults)
+
+        // SideStore-zh-CN v2: one-time gentle migration for overwrite installs whose
+        // persisted menuAnisetteURL still points to a deprecated 502 server.
+        let zhCNAnisetteV2MigrationKey = "zhCNAnisetteDefaultsV2Applied"
+        if !UserDefaults.standard.bool(forKey: zhCNAnisetteV2MigrationKey) {
+            if let persistedURL = UserDefaults.standard.object(forKey: #keyPath(UserDefaults.menuAnisetteURL)) as? String,
+               persistedURL.isEmpty || AppConstants.Anisette.Servers.deprecatedServerURLs.contains(persistedURL) {
+                UserDefaults.standard.menuAnisetteURL = AppConstants.Anisette.Servers.defaultServerURL
+            }
+            UserDefaults.standard.set(true, forKey: zhCNAnisetteV2MigrationKey)
+        }
         
         // MDC is unsupported and spareRestore is patched
         if !isMacDirtyCowSupported && ProcessInfo().sparseRestorePatched

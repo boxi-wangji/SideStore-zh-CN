@@ -50,8 +50,51 @@ public actor AnisetteServersManager {
     private let lastDailySyncKey = "AnisetteServersManager.lastDailySyncTimestamp"
     private let lastDailySyncSuccessKey = "AnisetteServersManager.lastDailySyncSuccess"
     private let lastFailureSyncKey = "AnisetteServersManager.lastFailureSyncTimestamp"
+    private let zhCNServerOrderV2AppliedKey = "AnisetteServersManager.zhCNServerOrderV2Applied"
+
+    private static let defaultSeedServers: [AnisetteServerItem] = [
+        AnisetteServerItem(name: "jkcoxson", address: AppConstants.Anisette.Servers.defaultServerURL, isHidden: false),
+        AnisetteServerItem(name: "SideStore (New)", address: AppConstants.Anisette.Servers.secondaryServerURL, isHidden: false)
+    ]
 
     private init() {}
+
+    private var hasPersistedLocalServersFile: Bool {
+        let fileManager = FileManager.default
+        return fileManager.fileExists(atPath: userFacingFileURL.path) || fileManager.fileExists(atPath: privateBackupFileURL.path)
+    }
+
+    private static func formatServerName(_ name: String, address: String) -> String {
+        guard AppConstants.Anisette.Servers.deprecatedServerURLs.contains(address) else {
+            return name
+        }
+        if name.contains("旧节点") || name.contains("502") {
+            return name
+        }
+        return "\(name)（旧节点/易502）"
+    }
+
+    private static func prioritizeDefaultServers(_ items: [AnisetteServerItem]) -> [AnisetteServerItem] {
+        var primary: [AnisetteServerItem] = []
+        var secondary: [AnisetteServerItem] = []
+        var normal: [AnisetteServerItem] = []
+        var deprecated: [AnisetteServerItem] = []
+
+        for var item in items {
+            item.name = formatServerName(item.name, address: item.address)
+            if item.address == AppConstants.Anisette.Servers.defaultServerURL {
+                primary.append(item)
+            } else if item.address == AppConstants.Anisette.Servers.secondaryServerURL {
+                secondary.append(item)
+            } else if AppConstants.Anisette.Servers.deprecatedServerURLs.contains(item.address) {
+                deprecated.append(item)
+            } else {
+                normal.append(item)
+            }
+        }
+
+        return primary + secondary + normal + deprecated
+    }
 
     // MARK: - Local Persistence & In-Memory Caching
 
@@ -72,7 +115,8 @@ public actor AnisetteServersManager {
 
         guard fileManager.fileExists(atPath: targetURL.path),
               let data = try? Data(contentsOf: targetURL) else {
-            return []
+            // Return built-in preconfigured seed servers so first sign-in works immediately even before remote sync finishes
+            return Self.defaultSeedServers
         }
 
         let decoder = Foundation.JSONDecoder()
@@ -86,6 +130,25 @@ public actor AnisetteServersManager {
                     let isHidden = dict["isHidden"] as? Bool ?? false
                     items.append(AnisetteServerItem(name: name, address: address, isHidden: isHidden))
                 }
+            }
+        }
+
+        if items.isEmpty {
+            return Self.defaultSeedServers
+        }
+
+        // One-time gentle reorder for overwrite installs whose existing list still starts with a deprecated 502 node
+        if !UserDefaults.standard.bool(forKey: zhCNServerOrderV2AppliedKey) {
+            UserDefaults.standard.set(true, forKey: zhCNServerOrderV2AppliedKey)
+            if !isOfflineMode,
+               let firstAddress = items.first?.address,
+               AppConstants.Anisette.Servers.deprecatedServerURLs.contains(firstAddress) {
+                items = Self.prioritizeDefaultServers(items)
+                if AppConstants.Anisette.Servers.deprecatedServerURLs.contains(UserDefaults.standard.menuAnisetteURL) {
+                    UserDefaults.standard.menuAnisetteURL = AppConstants.Anisette.Servers.defaultServerURL
+                }
+                saveLocalServers(items)
+                return items
             }
         }
 
@@ -254,7 +317,13 @@ public actor AnisetteServersManager {
             inMemoryServersCache = nil
             let sourceURL = UserDefaults.standard.menuAnisetteList.isEmpty ? AnisetteServersManager.defaultSource : UserDefaults.standard.menuAnisetteList
             let remoteServers = try await fetchRemoteServers(serverSource: sourceURL)
-            let rawItems = remoteServers.map { AnisetteServerItem(name: $0.name, address: $0.address, isHidden: false) }
+            let rawItems = Self.prioritizeDefaultServers(
+                remoteServers.map { AnisetteServerItem(name: $0.name, address: $0.address, isHidden: false) }
+            )
+            UserDefaults.standard.set(true, forKey: zhCNServerOrderV2AppliedKey)
+            if AppConstants.Anisette.Servers.deprecatedServerURLs.contains(UserDefaults.standard.menuAnisetteURL) {
+                UserDefaults.standard.menuAnisetteURL = AppConstants.Anisette.Servers.defaultServerURL
+            }
             saveLocalServers(rawItems)
             return rawItems
         }
@@ -347,7 +416,18 @@ public actor AnisetteServersManager {
 
         let sourceURL = sourceURLString ?? (UserDefaults.standard.menuAnisetteList.isEmpty ? AnisetteServersManager.defaultSource : UserDefaults.standard.menuAnisetteList)
 
+        let hadPersistedFile = hasPersistedLocalServersFile
         let remoteServers = try await fetchRemoteServers(serverSource: sourceURL)
+
+        if !hadPersistedFile {
+            let prioritizedItems = Self.prioritizeDefaultServers(
+                remoteServers.map { AnisetteServerItem(name: $0.name, address: $0.address, isHidden: false) }
+            )
+            UserDefaults.standard.set(true, forKey: zhCNServerOrderV2AppliedKey)
+            saveLocalServers(prioritizedItems)
+            return prioritizedItems
+        }
+
         let localItems = loadLocalServers()
 
         var mergedItems: [AnisetteServerItem] = []
@@ -358,14 +438,20 @@ public actor AnisetteServersManager {
             if let remoteIndex = remainingRemote.firstIndex(where: { $0.address == local.address }) {
                 let remote = remainingRemote.remove(at: remoteIndex)
                 var updated = local
-                updated.name = remote.name
+                updated.name = Self.formatServerName(remote.name, address: remote.address)
                 mergedItems.append(updated)
             }
         }
 
         // 2. Append newly added remote servers
         for newRemote in remainingRemote {
-            mergedItems.append(AnisetteServerItem(name: newRemote.name, address: newRemote.address, isHidden: false))
+            mergedItems.append(
+                AnisetteServerItem(
+                    name: Self.formatServerName(newRemote.name, address: newRemote.address),
+                    address: newRemote.address,
+                    isHidden: false
+                )
+            )
         }
 
         saveLocalServers(mergedItems)

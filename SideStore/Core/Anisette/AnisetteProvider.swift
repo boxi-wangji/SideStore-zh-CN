@@ -35,9 +35,10 @@ enum AnisetteProvider {
         let identifier = await AnisetteConfigManager.shared.resolveDeviceIdentifier()
         let headers = await AnisetteConfigManager.shared.makeRequestHeaders()
 
+        let rotationDisabled = UserDefaults.standard.disableAnisetteRotation
         let (anisetteData, newAdiBlob) = try await provider.fetchAnisetteDataWithFailover(
-            servers: UserDefaults.standard.disableAnisetteRotation ? [servers[startIndex]] : servers,
-            startIndex: startIndex,
+            servers: rotationDisabled ? [servers[startIndex]] : servers,
+            startIndex: rotationDisabled ? 0 : startIndex,
             identifier: identifier,
             existingAdiBlob: existingBlob,
             headers: headers,

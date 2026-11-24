@@ -553,7 +553,7 @@ private extension AppDelegate
                         content.title = NSLocalizedString("SideStore 动态", comment: "")
                     }
                     
-                    content.body = newsItem.title
+                    content.body = newsItem.localizedTitle
                     content.sound = .default
                     
                     let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)

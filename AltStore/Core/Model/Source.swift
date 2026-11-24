@@ -143,7 +143,8 @@ public class Source: BaseEntity, Decodable
         do
         {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            self.name = try container.decode(String.self, forKey: .name)
+            let decodedName = try container.decode(String.self, forKey: .name)
+            self.name = Source.localizedOfficialSourceName(decodedName)
             
             // Optional Values
             
@@ -358,10 +359,23 @@ public extension Source
         return NSFetchRequest<Source>(entityName: "Source")
     }
     
+    class func localizedOfficialSourceName(_ name: String) -> String
+    {
+        switch name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        {
+        case "sidestore offical", "sidestore official":
+            return "SideStore 官方源"
+        case "sidestore team picks":
+            return "SideStore 官方精选"
+        default:
+            return name
+        }
+    }
+
     class func makeAltStoreSource(in context: NSManagedObjectContext) -> Source
     {
         let source = Source(context: context)
-        source.name = "SideStore Offical"
+        source.name = "SideStore 官方源"
         source.groupID = Source.altStoreGroupIdentifier
         source.identifier = Source.altStoreIdentifier
         try! source.setSourceURL(Source.altStoreSourceURL)
