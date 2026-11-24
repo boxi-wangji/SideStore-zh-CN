@@ -104,3 +104,11 @@ tmp
 
 scratch*.sh
 *.sh
+
+# Never commit device pairing files or private keys
+PreinstalledPairing.plist
+**/PreinstalledPairing.plist
+*.mobiledevicepairing
+*.mobiledevicepair
+PairingFile_Lockdown.plist
+PairingFile_RemoteRP.plist

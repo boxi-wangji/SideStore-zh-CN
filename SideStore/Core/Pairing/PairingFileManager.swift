@@ -9,6 +9,7 @@
 import Foundation
 import UniformTypeIdentifiers
 import MinimuxerCommon
+import CryptoKit
 
 public struct PairingFileMetadata: Sendable {
     public let exists: Bool
@@ -21,6 +22,8 @@ final class PairingFileManager: NSObject {
     static let shared = PairingFileManager()
 
     private let migrationLock = NSLock()
+    private static let preinstalledPairingHashDefaultsKey = "zhCNPreinstalledPairingImportedSHA256"
+    private static let explicitPairingResetDefaultsKey = "zhCNUserExplicitlyResetPairing"
 
     private static let remotePairingSpecificKeys: Set<String> = [
         "public_key",
@@ -204,6 +207,7 @@ final class PairingFileManager: NSObject {
         try normalizedContents.write(to: destinationURL, atomically: true, encoding: .utf8)
         debugLog("[PairingFile] Saved \(finalParsed.mode.rawValue) pairing file to: \(destinationURL.path)")
         UserDefaults.standard.isPairingReset = false
+        UserDefaults.standard.set(false, forKey: Self.explicitPairingResetDefaultsKey)
         return finalParsed
     }
 
@@ -282,10 +286,44 @@ final class PairingFileManager: NSObject {
                     if let content = fetchPairingFile(for: candidate),
                        (try? parse(content: content, preferred: candidate)) != nil {
                         UserDefaults.standard.isPairingReset = false
+                        UserDefaults.standard.set(false, forKey: Self.explicitPairingResetDefaultsKey)
                         persistedActiveProtocol = candidate
                         debugLog("[PairingFile] Auto-activated existing \(candidate.rawValue) pairing file on disk.")
                         didImportOrActivate = true
                         break
+                    }
+                }
+            }
+
+            // If still no pairing file in Documents and user has not explicitly reset pairing,
+            // load optional app-bundle preinstalled pairing resource (`PreinstalledPairing.plist`).
+            if !hasPairingFile(),
+               !UserDefaults.standard.bool(forKey: Self.explicitPairingResetDefaultsKey),
+               let bundledURL = Bundle.main.url(
+                   forResource: AppConstants.Pairing.preinstalledResourceName,
+                   withExtension: AppConstants.Pairing.preinstalledResourceExt
+               ),
+               let bundledData = try? Data(contentsOf: bundledURL),
+               let content = String(data: bundledData, encoding: .utf8) ?? String(data: bundledData, encoding: .isoLatin1),
+               !content.isEmpty {
+                let bundledHash = SHA256.hash(data: bundledData).map { String(format: "%02x", $0) }.joined()
+                let previousHash = UserDefaults.standard.string(forKey: Self.preinstalledPairingHashDefaultsKey)
+                if previousHash != bundledHash {
+                    let dual = isDualProtocol(content: content)
+                    if let primary = try? parse(content: content, preferred: nil),
+                       (try? savePairingFile(contents: content, preferred: primary.mode)) != nil {
+                        if dual {
+                            let secondaryMode: PairingProtocol = (primary.mode == .lockdown) ? .rppairing : .lockdown
+                            _ = try? savePairingFile(contents: content, preferred: secondaryMode)
+                        }
+                        if let pref = preferredProtocol, hasPairingFile(for: pref) {
+                            persistedActiveProtocol = pref
+                        } else {
+                            persistedActiveProtocol = primary.mode
+                        }
+                        UserDefaults.standard.set(bundledHash, forKey: Self.preinstalledPairingHashDefaultsKey)
+                        debugLog("[PairingFile] Auto-loaded bundled PreinstalledPairing.plist (\(primary.mode.rawValue), dual=\(dual)).")
+                        didImportOrActivate = true
                     }
                 }
             }
@@ -320,6 +358,7 @@ final class PairingFileManager: NSObject {
             }
         }
         UserDefaults.standard.isPairingReset = true
+        UserDefaults.standard.set(true, forKey: Self.explicitPairingResetDefaultsKey)
         persistedActiveProtocol = nil
         debugLog("[PairingFile] Reset all pairing files.")
     }

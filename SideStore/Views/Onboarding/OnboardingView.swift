@@ -29,7 +29,14 @@ struct OnboardingView: View {
                     .padding(.top, 8)
 
                 TabView(selection: $currentStep) {
-                    WelcomeStep(onNext: { currentStep += 1 })
+                    WelcomeStep(onNext: {
+                        PairingFileManager.shared.importExternalOrLegacyPairingFileIfNeeded()
+                        if PairingFileManager.shared.hasPairingFile() {
+                            currentStep = 2
+                        } else {
+                            currentStep += 1
+                        }
+                    })
                         .tag(0)
 
                     PairingFileStep(onNext: { currentStep += 1 })
