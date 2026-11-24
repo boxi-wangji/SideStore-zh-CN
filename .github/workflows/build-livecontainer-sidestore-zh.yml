@@ -470,7 +470,9 @@ jobs:
                   b"lc.settings.autoConvertToSharedApp",
                   b"lc.settings.autoConvertToSharedAppDesc",
                   b"lc.settings.multiLC.convertAllPrivateToShared",
-                  b"convertToSharedApp",
+                  b"lc.settings.multiLC.cannotConvertBuiltinSideStore",
+                  b"Auto-convert to shared app failed",
+                  b"Batch convert to shared failed",
               ):
                   assert marker in lc_ui_bin, f"Missing expected marker in LiveContainerSwiftUI binary: {marker!r}"
               print("OK: Auto-Shared & Batch-Convert binary markers verified in LiveContainerSwiftUI.framework")
