@@ -146,7 +146,7 @@ final class PairingFileManager: NSObject {
             return parsed.mode
         } catch {
             if isAmbiguousPairingError(error) {
-                return .lockdown
+                return .rppairing
             }
             return nil
         }
@@ -185,10 +185,10 @@ final class PairingFileManager: NSObject {
             return try PairingFileParser.parse(content: content, preferred: preferred)
         } catch {
             // iloader 2.4.2 writes dual-protocol pairing files (10 Lockdown keys + 4 Remote Pairing keys).
-            // When no protocol is explicitly preferred, default to .lockdown for LocalDevVPN stability.
+            // When no protocol is explicitly preferred, default to .rppairing for iOS 17+/27 stability.
             if preferred == nil, isAmbiguousPairingError(error) {
-                debugLog("[PairingFile] Dual-protocol pairing file detected; falling back to .lockdown protocol.")
-                return try PairingFileParser.parse(content: content, preferred: .lockdown)
+                debugLog("[PairingFile] Dual-protocol pairing file detected; falling back to .rppairing protocol.")
+                return try PairingFileParser.parse(content: content, preferred: .rppairing)
             }
             throw error
         }
@@ -265,7 +265,7 @@ final class PairingFileManager: NSObject {
             }
 
             // Sanitize any existing dual-protocol files on disk (e.g. from overwrite upgrade)
-            for proto in [PairingProtocol.lockdown, PairingProtocol.rppairing] {
+            for proto in [PairingProtocol.rppairing, PairingProtocol.lockdown] {
                 let url = pairingFileURL(for: proto)
                 if fm.fileExists(atPath: url.path),
                    let content = try? String(contentsOf: url, encoding: .utf8),
@@ -280,9 +280,9 @@ final class PairingFileManager: NSObject {
             }
 
             // If valid pairing files already exist on disk (e.g. migrated or placed externally)
-            // while hasPairingFile() still reports false, activate them automatically.
+            // while hasPairingFile() still reports false, activate them automatically (prefer .rppairing).
             if !hasPairingFile() {
-                for candidate in [PairingProtocol.lockdown, PairingProtocol.rppairing] {
+                for candidate in [PairingProtocol.rppairing, PairingProtocol.lockdown] {
                     if let content = fetchPairingFile(for: candidate),
                        (try? parse(content: content, preferred: candidate)) != nil {
                         UserDefaults.standard.isPairingReset = false
@@ -295,19 +295,24 @@ final class PairingFileManager: NSObject {
                 }
             }
 
-            // If still no pairing file in Documents and user has not explicitly reset pairing,
+            // If still no pairing file in Documents (or upgrading from an earlier bundled pairing file
+            // to a newer bundled Remote Pairing file) and user has not explicitly reset pairing,
             // load optional app-bundle preinstalled pairing resource (`PreinstalledPairing.plist`).
-            if !hasPairingFile(),
-               !UserDefaults.standard.bool(forKey: Self.explicitPairingResetDefaultsKey),
+            if !UserDefaults.standard.bool(forKey: Self.explicitPairingResetDefaultsKey),
                let bundledURL = bundledPreinstalledPairingURL(),
                let bundledData = try? Data(contentsOf: bundledURL),
                let content = String(data: bundledData, encoding: .utf8) ?? String(data: bundledData, encoding: .isoLatin1),
                !content.isEmpty {
                 let bundledHash = SHA256.hash(data: bundledData).map { String(format: "%02x", $0) }.joined()
                 let previousHash = UserDefaults.standard.string(forKey: Self.preinstalledPairingHashDefaultsKey)
-                if previousHash != bundledHash {
+                let needsFreshPreinstalled = !hasPairingFile()
+                let canUpgradeBundledToRP = previousHash != nil
+                    && previousHash != bundledHash
+                    && !hasPairingFile(for: .rppairing)
+                if previousHash != bundledHash, (needsFreshPreinstalled || canUpgradeBundledToRP) {
                     let dual = isDualProtocol(content: content)
                     if let primary = try? parse(content: content, preferred: nil),
+                       (needsFreshPreinstalled || primary.mode == .rppairing),
                        (try? savePairingFile(contents: content, preferred: primary.mode)) != nil {
                         if dual {
                             let secondaryMode: PairingProtocol = (primary.mode == .lockdown) ? .rppairing : .lockdown
