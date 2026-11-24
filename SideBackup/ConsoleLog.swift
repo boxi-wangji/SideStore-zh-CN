@@ -15,11 +15,9 @@ enum SideBackupError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .appGroupNotConfigured(let expected):
-            return "App Group is not configured. Bundle has no AppGroups entitlement containing '\(expected)'. " +
-                   "SideBackup was likely not resigned with the SideStore App Group entitlement."
+            return "未配置共享应用组 (App Group)：缺少包含 '\(expected)' 的权利。SideBackup 可能未随 SideStore 应用组权限正确重签。"
         case .appGroupContainerUnresolvable(let group):
-            return "Could not resolve container URL for App Group '\(group)'. " +
-                   "The provisioning profile may be missing the App Group entitlement."
+            return "无法解析应用组 '\(group)' 的共享目录路径，签名描述文件可能缺少 App Group 权限。"
         }
     }
 }

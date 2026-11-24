@@ -415,9 +415,11 @@
 			};
 			buildConfigurationList = BFD247652284B9A500981D42 /* Build configuration list for PBXProject "AltStore" */;
 			compatibilityVersion = "Xcode 9.3";
-			developmentRegion = en;
+			developmentRegion = zh_CN;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				zh_CN,
+				"zh-Hans",
 				en,
 				Base,
 			);

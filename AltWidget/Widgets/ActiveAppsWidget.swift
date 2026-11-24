@@ -52,8 +52,8 @@ struct ActiveAppsWidget: Widget
                 ActiveAppsWidgetView(entry: entry, widgetKind: widgetKind)
             }
             .supportedFamilies([.systemMedium])
-            .configurationDisplayName("Active Apps")
-            .description("View remaining days until your active apps expire. Tap the countdown timers to refresh them in the background.")
+            .configurationDisplayName("已激活应用列表")
+            .description("在桌面直观查看已激活应用的剩余有效天数，轻点倒计时按钮即可触发后台续期刷新。")
             
             return widgetConfig
         }
@@ -63,8 +63,8 @@ struct ActiveAppsWidget: Widget
                 UnsupportedWidgetView(requiredVersion: "iOS 17")
             }
             .supportedFamilies([.systemMedium])
-            .configurationDisplayName("Active Apps")
-            .description("Requires iOS 17 or later.")
+            .configurationDisplayName("已激活应用列表")
+            .description("此交互小组件需要 iOS 17 或更高版本。")
         }
     }
 }
@@ -157,11 +157,11 @@ private struct ActiveAppsWidgetView: View
                                 
                                 let text = if entry.date > app.expirationDate
                                 {
-                                    Text("Expired")
+                                    Text("已过期")
                                 }
                                 else
                                 {
-                                    Text("Expires in \(daysRemaining) ") + (daysRemaining == 1 ? Text("day") : Text("days"))
+                                    Text("剩余 \(daysRemaining) ") + (daysRemaining == 1 ? Text("天") : Text("天"))
                                 }
                                 
                                 text
@@ -227,11 +227,11 @@ private struct ActiveAppsWidgetView: View
     
     private var placeholder: some View {
         VStack(spacing: 4) {
-            Text("Open SideStore")
+            Text("进入 SideStore")
                 .font(.system(.body, design: .rounded))
                 .fontWeight(.semibold)
                 .foregroundColor(Color.white.opacity(0.8))
-            Text("Launch app to update widget")
+            Text("首次启动 SideStore 后即可同步显示数据")
                 .font(.system(.caption, design: .rounded))
                 .foregroundColor(Color.white.opacity(0.5))
                 .multilineTextAlignment(.center)

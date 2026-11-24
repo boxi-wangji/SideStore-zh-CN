@@ -35,15 +35,15 @@ class IntentError: NSError, CustomLocalizedStringResourceConvertible, @unchecked
 @available(iOS 17.0, tvOS 17.0, *)
 struct InstallIPAIntent: AppIntent, ProgressReportingIntent
 {
-    static var title: LocalizedStringResource = "Install IPA"
-    static var description = IntentDescription("Installs an IPA file with SideStore.")
+    static var title: LocalizedStringResource = "安装 IPA"
+    static var description = IntentDescription("通过 SideStore 签名并侧载安装指定的 IPA 文件。")
     static var openAppWhenRun = false
 
-    @Parameter(title: "IPA File")
+    @Parameter(title: "IPA 安装包文件")
     var ipaFile: IntentFile
 
     static var parameterSummary: some ParameterSummary {
-        Summary("Install \(\.$ipaFile)")
+        Summary("安装 \(\.$ipaFile)")
     }
 
     init()
@@ -104,17 +104,17 @@ struct RefreshAllAppsIntent: AppIntent, CustomIntentMigratedAppIntent, Predictab
 {
     static let intentClassName = "RefreshAllIntent"
     
-    static var title: LocalizedStringResource = "Refresh All Apps"
-    static var description = IntentDescription("Refreshes your sideloaded apps to prevent them from expiring.")
+    static var title: LocalizedStringResource = "刷新全部应用"
+    static var description = IntentDescription("自动为所有已激活的侧载应用续期签名，防止 7 天到期失效。")
     
     static var parameterSummary: some ParameterSummary {
-        Summary("Refresh All Apps")
+        Summary("刷新全部应用")
     }
     
     static var predictionConfiguration: some IntentPredictionConfiguration {
         IntentPrediction {
             DisplayRepresentation(
-                title: "Refresh All Apps",
+                title: "刷新全部应用",
                 subtitle: ""
             )
         }
@@ -174,7 +174,7 @@ struct RefreshAllAppsIntent: AppIntent, CustomIntentMigratedAppIntent, Predictab
                 }
             }
             
-            return .result(dialog: "All apps have been refreshed.")
+            return .result(dialog: "所有侧载应用已成功续期刷新。")
         }
         catch
         {

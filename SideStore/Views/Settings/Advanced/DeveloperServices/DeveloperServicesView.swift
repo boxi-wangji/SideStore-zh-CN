@@ -21,7 +21,7 @@ struct DeveloperServicesView: View {
         ZStack {
             List {
                 if let team = viewModel.team {
-                    Section(header: Text("Developer Account")) {
+                    Section(header: Text("当前开发者账号")) {
                         HStack(spacing: 12) {
                             Image(systemName: "person.crop.circle.fill")
                                 .font(.system(size: 36))
@@ -30,7 +30,7 @@ struct DeveloperServicesView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(team.name)
                                     .font(.headline)
-                                Text("Team ID: \(team.identifier)")
+                                Text("团队 ID：\(team.identifier)")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
@@ -49,7 +49,7 @@ struct DeveloperServicesView: View {
                     }
                 }
 
-                Section(header: Text("Developer Portal Services")) {
+                Section(header: Text("开发者中心服务")) {
                     NavigationLink(destination: AppIDsListView(viewModel: viewModel, presentingViewController: presentingViewController)) {
                         HStack(spacing: 14) {
                             Image(systemName: "app.badge.checkmark")
@@ -58,9 +58,9 @@ struct DeveloperServicesView: View {
                                 .frame(width: 28)
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("App IDs")
+                                Text("应用 ID (App IDs)")
                                     .font(.body)
-                                Text("\(viewModel.appIDs.count) registered")
+                                Text("已注册 \(viewModel.appIDs.count) 个")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -76,9 +76,9 @@ struct DeveloperServicesView: View {
                                 .frame(width: 28)
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Provisioning Profiles")
+                                Text("描述文件 (Profiles)")
                                     .font(.body)
-                                Text("\(viewModel.profiles.count) active on portal")
+                                Text("云端有效 \(viewModel.profiles.count) 个")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -94,9 +94,9 @@ struct DeveloperServicesView: View {
                                 .frame(width: 28)
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Certificates")
+                                Text("签名证书管理")
                                     .font(.body)
-                                Text("\(viewModel.certificates.count) registered on portal")
+                                Text("云端已注册 \(viewModel.certificates.count) 张")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -112,9 +112,9 @@ struct DeveloperServicesView: View {
                                 .frame(width: 28)
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("App Groups")
+                                Text("应用组 (App Groups)")
                                     .font(.body)
-                                Text("\(viewModel.appGroups.count) configured")
+                                Text("已配置 \(viewModel.appGroups.count) 个")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -130,9 +130,9 @@ struct DeveloperServicesView: View {
                                 .frame(width: 28)
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Registered Devices")
+                                Text("已注册测试设备")
                                     .font(.body)
-                                Text("\(viewModel.devices.count) devices")
+                                Text("共 \(viewModel.devices.count) 台设备")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -150,7 +150,7 @@ struct DeveloperServicesView: View {
             if viewModel.isLoading && viewModel.appIDs.isEmpty && viewModel.profiles.isEmpty {
                 Color.black.opacity(0.15)
                     .edgesIgnoringSafeArea(.all)
-                ProgressView("Connecting to Developer Portal...")
+                ProgressView("正在连接 Apple 开发者中心…")
                     .padding()
                     #if !os(tvOS)
                     .background(Color(UIColor.secondarySystemGroupedBackground))
@@ -161,7 +161,7 @@ struct DeveloperServicesView: View {
                     .shadow(radius: 6)
             }
         }
-        .navigationTitle("Developer Portal")
+        .navigationTitle("开发者中心")
         .onAppear {
             if viewModel.appIDs.isEmpty && viewModel.profiles.isEmpty {
                 Task {
@@ -174,9 +174,9 @@ struct DeveloperServicesView: View {
         }
         .alert(isPresented: $viewModel.showErrorAlert) {
             Alert(
-                title: Text("Developer Portal Error"),
-                message: Text(viewModel.errorMessage ?? "An unknown error occurred."),
-                dismissButton: .default(Text("OK"))
+                title: Text("开发者中心错误"),
+                message: Text(viewModel.errorMessage ?? "发生未知错误。"),
+                dismissButton: .default(Text("好"))
             )
         }
         .developerServicesToast(viewModel: viewModel)

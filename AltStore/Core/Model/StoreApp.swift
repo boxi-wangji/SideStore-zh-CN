@@ -696,7 +696,7 @@ public extension StoreApp
         app.name = "SideStore"
         app.bundleIdentifier = placeholderBundleId
         app.developerName = "Side Team"
-        app.localizedDescription = "SideStore is an alternative App Store."
+        app.localizedDescription = "SideStore 是一款无需电脑即可在本机独立侧载与自动刷新 iOS 应用的工具。"
         app.iconURL = sideStoreAppIconURL        
         app.screenshotURLs = []
         app.sourceIdentifier = placeholderSourceID

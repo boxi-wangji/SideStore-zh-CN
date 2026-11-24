@@ -84,7 +84,7 @@ public final class PairingFileManagementViewModel: ObservableObject {
                     targetImportMode = nil
                     refresh()
                 } catch {
-                    activeAlert = .importError("Failed to import pairing file: \(error.localizedDescription)")
+                    activeAlert = .importError("导入配对文件失败：\(error.localizedDescription)")
                 }
                 return
             }
@@ -100,7 +100,7 @@ public final class PairingFileManagementViewModel: ObservableObject {
                 targetImportMode = nil
                 refresh()
             } catch {
-                activeAlert = .importError("Failed to import pairing file: \(error.localizedDescription)")
+                activeAlert = .importError("导入配对文件失败：\(error.localizedDescription)")
             }
         case .failure(let error):
             activeAlert = .importError(error.localizedDescription)
@@ -114,7 +114,7 @@ public final class PairingFileManagementViewModel: ObservableObject {
             targetImportMode = nil
             refresh()
         } catch {
-            activeAlert = .importError("Failed to import pairing file: \(error.localizedDescription)")
+            activeAlert = .importError("导入配对文件失败：\(error.localizedDescription)")
         }
     }
 
@@ -124,7 +124,7 @@ public final class PairingFileManagementViewModel: ObservableObject {
             targetImportMode = nil
             refresh()
         } catch {
-            activeAlert = .importError("Failed to import pairing file: \(error.localizedDescription)")
+            activeAlert = .importError("导入配对文件失败：\(error.localizedDescription)")
         }
     }
 
@@ -136,10 +136,10 @@ public final class PairingFileManagementViewModel: ObservableObject {
     ) {
         guard let topVC = UIApplication.shared.topViewController() else { return }
 
-        let title = NSLocalizedString("Protocol Mismatch", comment: "")
+        let title = NSLocalizedString("配对文件协议不匹配", comment: "")
         let message = String(
             format: NSLocalizedString(
-                "Your saved preference is **%@**, but the provided pairing file is **%@**.\n\nDo you want to switch and accept **%@** as your preferred protocol, or load it without changing your preference?",
+                "你当前设置的首选协议为 **%@**，但导入的配对文件协议为 **%@**。\n\n是否将首选协议切换为 **%@**，还是仅导入而不修改偏好？",
                 comment: ""
             ),
             saved.rawValue,
@@ -151,21 +151,21 @@ public final class PairingFileManagementViewModel: ObservableObject {
         alert.setMarkdownMessage(message)
 
         alert.addAction(UIAlertAction(
-            title: String(format: NSLocalizedString("Switch to %@", comment: ""), provided.rawValue),
+            title: String(format: NSLocalizedString("切换为 %@", comment: ""), provided.rawValue),
             style: .default
         ) { [weak self] _ in
             self?.confirmProtocolMismatch(url: url, newProtocol: provided)
         })
 
         alert.addAction(UIAlertAction(
-            title: NSLocalizedString("Load Only", comment: ""),
+            title: NSLocalizedString("仅导入文件", comment: ""),
             style: .default
         ) { [weak self] _ in
             self?.importOnly(url: url, mode: provided)
         })
 
         alert.addAction(UIAlertAction(
-            title: NSLocalizedString("Cancel", comment: ""),
+            title: NSLocalizedString("取消", comment: ""),
             style: .cancel
         ) { [weak self] _ in
             self?.targetImportMode = nil
@@ -182,7 +182,7 @@ public final class PairingFileManagementViewModel: ObservableObject {
             refresh()
         } catch {
             debugLog("[PairingFileManagementViewModel] Failed to activate \(proto.rawValue): \(error)")
-            activeAlert = .importError("Failed to activate \(proto.rawValue): \(error.localizedDescription)")
+            activeAlert = .importError("激活 \(proto.rawValue) 协议失败：\(error.localizedDescription)")
             refresh()
         }
     }

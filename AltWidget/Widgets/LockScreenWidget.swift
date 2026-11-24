@@ -26,8 +26,8 @@ struct TextLockScreenWidget: Widget
                 ComplicationView(apps: entry.apps, date: entry.date, isPlaceholder: entry.isPlaceholder, style: .text)
             }
             .supportedFamilies([.accessoryCircular])
-            .configurationDisplayName("AltWidget (Text)")
-            .description("View remaining days until SideStore expires.")
+            .configurationDisplayName("SideStore 锁屏文字组件")
+            .description("在锁屏实时查看 SideStore 签名剩余有效天数。")
         }
         else
         {
@@ -35,8 +35,8 @@ struct TextLockScreenWidget: Widget
                 UnsupportedWidgetView(requiredVersion: "iOS 16")
             }
             .supportedFamilies([.systemSmall])
-            .configurationDisplayName("AltWidget (Text)")
-            .description("Requires iOS 16 or later.")
+            .configurationDisplayName("SideStore 锁屏文字组件")
+            .description("锁屏小组件需要 iOS 16 或更高版本。")
         }
     }
 }
@@ -58,8 +58,8 @@ struct IconLockScreenWidget: Widget
                 ComplicationView(apps: entry.apps, date: entry.date, isPlaceholder: entry.isPlaceholder, style: .icon)
             }
             .supportedFamilies([.accessoryCircular])
-            .configurationDisplayName("AltWidget (Icon)")
-            .description("View remaining days until SideStore expires.")
+            .configurationDisplayName("SideStore 锁屏图标组件")
+            .description("在锁屏实时查看 SideStore 签名剩余有效天数。")
         }
         else
         {
@@ -67,8 +67,8 @@ struct IconLockScreenWidget: Widget
                 UnsupportedWidgetView(requiredVersion: "iOS 16")
             }
             .supportedFamilies([.systemSmall])
-            .configurationDisplayName("AltWidget (Icon)")
-            .description("Requires iOS 16 or later.")
+            .configurationDisplayName("SideStore 锁屏图标组件")
+            .description("锁屏小组件需要 iOS 16 或更高版本。")
         }
     }
 }
@@ -111,7 +111,7 @@ private struct ComplicationView: View
                         Text("-")
                             .font(.system(size: 20.0, weight: .bold, design: .rounded))
                         
-                        Text("DAYS")
+                        Text("天")
                             .font(.caption)
                     }
                     .fixedSize()
@@ -133,7 +133,7 @@ private struct ComplicationView: View
             }
             else if daysRemaining < 0
             {
-                Text("Expired")
+                Text("已过期")
                     .font(.system(size: 10, weight: .bold))
             }
             else
@@ -146,7 +146,7 @@ private struct ComplicationView: View
                         Text("\(daysRemaining)")
                             .font(.system(size: fontSize, weight: .bold, design: .rounded))
                         
-                        Text(daysRemaining == 1 ? "DAY" : "DAYS")
+                        Text(daysRemaining == 1 ? "天" : "天")
                             .font(.caption)
                     }
                     .fixedSize()

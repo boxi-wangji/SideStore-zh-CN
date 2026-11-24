@@ -415,8 +415,8 @@ extension AppDelegate
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: threeHours, repeats: false)
             
             let content = UNMutableNotificationContent()
-            content.title = NSLocalizedString("App Refresh Tip", comment: "")
-            content.body = NSLocalizedString("The more you open SideStore, the more chances it's given to refresh apps in the background.", comment: "")
+            content.title = NSLocalizedString("应用自动刷新提示", comment: "")
+            content.body = NSLocalizedString("平时越常打开 SideStore，iOS 系统分配给它在后台自动刷新签名的机会就越多。", comment: "")
             
             let request = UNNotificationRequest(identifier: "background-refresh-reminder5", content: content, trigger: trigger)
             UNUserNotificationCenter.current().add(request)
@@ -529,8 +529,8 @@ private extension AppDelegate
                     }
                     
                     let content = UNMutableNotificationContent()
-                    content.title = NSLocalizedString("New Update Available", comment: "")
-                    content.body = String(format: NSLocalizedString("%@ %@ is now available for download.", comment: ""), update.name, latestSupportedVersion.localizedVersion)
+                    content.title = NSLocalizedString("发现新版本更新", comment: "")
+                    content.body = String(format: NSLocalizedString("%@ %@ 现已可下载更新。", comment: ""), update.name, latestSupportedVersion.localizedVersion)
                     content.sound = .default
                     
                     let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
@@ -546,11 +546,11 @@ private extension AppDelegate
                     
                     if let app = newsItem.storeApp
                     {
-                        content.title = String(format: NSLocalizedString("%@ News", comment: ""), app.name)
+                        content.title = String(format: NSLocalizedString("%@ 动态", comment: ""), app.name)
                     }
                     else
                     {
-                        content.title = NSLocalizedString("SideStore News", comment: "")
+                        content.title = NSLocalizedString("SideStore 动态", comment: "")
                     }
                     
                     content.body = newsItem.title
@@ -563,7 +563,7 @@ private extension AppDelegate
                 DispatchQueue.main.async {
                     if UIApplication.shared.applicationState == .active {
                         if !updates.isEmpty, let window = UIApplication.shared.connectedScenes.compactMap({ ($0 as? UIWindowScene)?.windows.first(where: { $0.isKeyWindow }) }).first {
-                            let toastView = ToastView(text: "New Update Available", detailText: "\(updates.count) update(s) available")
+                            let toastView = ToastView(text: "发现新版本更新", detailText: "有 \(updates.count) 个应用可更新")
                             toastView.show(in: window)
                         }
                     } else {

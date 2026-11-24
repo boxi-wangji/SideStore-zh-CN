@@ -70,8 +70,8 @@ struct WirelessPairTarget: Identifiable, Hashable {
 @MainActor
 final class WirelessPairViewModel: ObservableObject {
     // Server Advertising State
-    @Published var statusText = "Ready to pair"
-    @Published var subStatusText = "Tap Start to advertise this device on the local network."
+    @Published var statusText = "准备就绪，可开始配对"
+    @Published var subStatusText = "点击下方按钮在局域网广播配对服务，或点击右上角连接其他设备。"
     @Published var pinCode: String? = nil
     @Published var isAdvertising = false
     @Published var pairedDevice: MinimuxerPairedDevice? = nil
@@ -138,8 +138,8 @@ final class WirelessPairViewModel: ObservableObject {
                 guard let self = self else { return }
                 self.serviceID = serviceID
                 self.port = port
-                self.statusText = "Advertising server..."
-                self.subStatusText = "Ensure both devices are on the same Wi-Fi."
+                self.statusText = "正在广播配对服务…"
+                self.subStatusText = "请确保两台设备连接在同一局域网 Wi-Fi 下。"
             }
         }
         
@@ -148,8 +148,8 @@ final class WirelessPairViewModel: ObservableObject {
             Task { @MainActor in
                 guard let self = self else { return }
                 self.pinCode = pin
-                self.statusText = "Device Connected"
-                self.subStatusText = "Enter the pairing code shown below on your other device settings screen."
+                self.statusText = "设备已连接"
+                self.subStatusText = "请在另一台设备的配对界面输入下方显示的 6 位数字配对码。"
             }
         }
         
@@ -160,8 +160,8 @@ final class WirelessPairViewModel: ObservableObject {
                 self.pinPromptCallback = submitPin
                 self.enteredPin = ""
                 self.isPinPromptPresented = true
-                self.statusText = "Enter Pairing PIN"
-                self.subStatusText = "Enter the 6-digit code shown on your Apple TV / device screen."
+                self.statusText = "请输入配对码 (PIN)"
+                self.subStatusText = "请输入目标设备屏幕上显示的 6 位数字验证码。"
             }
         }
     }
@@ -492,8 +492,8 @@ final class WirelessPairViewModel: ObservableObject {
         errorMessage = nil
         serviceID = nil
         port = nil
-        statusText = "Waiting for connection..."
-        subStatusText = "Open Remote Pairing on your Apple TV / Vision Pro / host device to discover this server."
+        statusText = "正在等待连接…"
+        subStatusText = "请在目标设备或配对端发起远程配对以发现本机。"
         
         wirelessPairing.start(
             outPath: docsPath,
@@ -514,15 +514,15 @@ final class WirelessPairViewModel: ObservableObject {
                 case .success(let device):
                     debugLog("[WirelessPairViewModel] startPairing() SUCCESS with device: name='\(device.name)', model='\(device.model)'")
                     self.pairedDevice = device
-                    self.statusText = "Success!"
-                    self.subStatusText = "Successfully paired with \(device.name) (\(device.model))!\nPairing file saved to documents."
+                    self.statusText = "配对成功！"
+                    self.subStatusText = "已成功与 \(device.name) (\(device.model)) 完成无线配对！\n配对文件已自动保存。"
                     self.shareSheetURL = URL(fileURLWithPath: device.pairingFilePath)
                     self.isShareSheetPresented = true
                 case .failure(let error):
                     debugLog("[WirelessPairViewModel] startPairing() FAILURE: error='\(error.localizedDescription)'")
                     self.errorMessage = error.localizedDescription
-                    self.statusText = "Pairing Failed"
-                    self.subStatusText = "An error occurred during pairing."
+                    self.statusText = "配对失败"
+                    self.subStatusText = "无线配对过程中发生错误。"
                 }
             }
         }
@@ -533,8 +533,8 @@ final class WirelessPairViewModel: ObservableObject {
         wirelessPairing.stop()
         
         isAdvertising = false
-        statusText = "Ready to pair"
-        subStatusText = "Tap Start to advertise this device on the local network."
+        statusText = "准备就绪，可开始配对"
+        subStatusText = "点击下方按钮在局域网广播配对服务，或点击右上角连接其他设备。"
         pinCode = nil
         errorMessage = nil
         serviceID = nil
@@ -554,8 +554,8 @@ final class WirelessPairViewModel: ObservableObject {
         errorMessage = nil
         serviceID = nil
         port = nil
-        statusText = "Connecting to device..."
-        subStatusText = "Initiating pairing handshake on \(targetIp):\(targetPort)..."
+        statusText = "正在连接目标设备…"
+        subStatusText = "正在向 \(targetIp):\(targetPort) 发起配对握手…"
         
         wirelessPairing.trigger(
             targetIp: targetIp,
@@ -577,15 +577,15 @@ final class WirelessPairViewModel: ObservableObject {
                 case .success(let device):
                     debugLog("[WirelessPairViewModel] triggerPairing() SUCCESS with device: name='\(device.name)', model='\(device.model)'")
                     self.pairedDevice = device
-                    self.statusText = "Success!"
-                    self.subStatusText = "Successfully paired with \(device.name) (\(device.model))!\nPairing file saved to documents."
+                    self.statusText = "配对成功！"
+                    self.subStatusText = "已成功与 \(device.name) (\(device.model)) 完成无线配对！\n配对文件已自动保存。"
                     self.shareSheetURL = URL(fileURLWithPath: device.pairingFilePath)
                     self.isShareSheetPresented = true
                 case .failure(let error):
                     debugLog("[WirelessPairViewModel] triggerPairing() FAILURE: error='\(error.localizedDescription)'")
                     self.errorMessage = error.localizedDescription
-                    self.statusText = "Pairing Failed"
-                    self.subStatusText = "An error occurred during pairing: \(error.localizedDescription)"
+                    self.statusText = "配对失败"
+                    self.subStatusText = "配对出错：\(error.localizedDescription)"
                 }
                 completion?(result)
             }

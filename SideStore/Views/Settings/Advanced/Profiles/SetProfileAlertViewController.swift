@@ -37,14 +37,14 @@ final class SetProfileAlertViewController: UIViewController {
         } else if let signingCert = CertificateManager.shared.getSigningCertificate(for: installedApp) {
             currentCertName = signingCert.name
         } else {
-            currentCertName = "Active Developer Cert"
+            currentCertName = "当前激活开发证书"
         }
 
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         formatter.timeStyle = .none
 
-        let currentProfileName = currentProfile?.name ?? "Default (Apple ID Managed)"
+        let currentProfileName = currentProfile?.name ?? "默认（由 Apple ID 自动管理）"
         let currentProfileBundleID = currentProfile?.bundleIdentifier ?? installedApp.bundleIdentifier
         let currentProfileExpiry = currentProfile != nil ? formatter.string(from: currentProfile!.expirationDate) : formatter.string(from: installedApp.expirationDate)
 

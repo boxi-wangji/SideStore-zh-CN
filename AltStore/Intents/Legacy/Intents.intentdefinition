@@ -32,7 +32,7 @@
 					<key>INIntentParameterCombinationSupportsBackgroundExecution</key>
 					<true/>
 					<key>INIntentParameterCombinationTitle</key>
-					<string>Refresh All Apps</string>
+					<string>刷新全部应用</string>
 					<key>INIntentParameterCombinationTitleID</key>
 					<string>cJxa2I</string>
 					<key>INIntentParameterCombinationUpdatesLinked</key>
@@ -48,7 +48,7 @@
 					<key>INIntentParameterCombinationSupportsBackgroundExecution</key>
 					<true/>
 					<key>INIntentParameterCombinationTitle</key>
-					<string>Refresh All Apps</string>
+					<string>刷新全部应用</string>
 					<key>INIntentParameterCombinationTitleID</key>
 					<string>DKTGdO</string>
 				</dict>
@@ -59,11 +59,11 @@
 				<array>
 					<dict>
 						<key>INIntentResponseCodeConciseFormatString</key>
-						<string>All apps have been refreshed.</string>
+						<string>所有应用已刷新完成。</string>
 						<key>INIntentResponseCodeConciseFormatStringID</key>
 						<string>3WMWsJ</string>
 						<key>INIntentResponseCodeFormatString</key>
-						<string>All apps have been refreshed.</string>
+						<string>所有应用已刷新完成。</string>
 						<key>INIntentResponseCodeFormatStringID</key>
 						<string>BjInD3</string>
 						<key>INIntentResponseCodeName</key>
@@ -90,7 +90,7 @@
 				<array>
 					<dict>
 						<key>INIntentResponseParameterDisplayName</key>
-						<string>Localized Description</string>
+						<string>错误说明</string>
 						<key>INIntentResponseParameterDisplayNameID</key>
 						<string>wdy22v</string>
 						<key>INIntentResponseParameterDisplayPriority</key>
@@ -105,7 +105,7 @@
 				</array>
 			</dict>
 			<key>INIntentTitle</key>
-			<string>Refresh All Apps</string>
+			<string>刷新全部应用</string>
 			<key>INIntentTitleID</key>
 			<string>2b6Xto</string>
 			<key>INIntentType</key>

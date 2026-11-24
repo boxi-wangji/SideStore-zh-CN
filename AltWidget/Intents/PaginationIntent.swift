@@ -25,7 +25,7 @@ class PaginationIntent: AppIntent, @unchecked Sendable {
     @Parameter(title: "widgetID")
     var widgetID: Int
 
-    @Parameter(title: "Direction")
+    @Parameter(title: "翻页方向")
     var direction: String
 
     @Parameter(title: "widgetKind")

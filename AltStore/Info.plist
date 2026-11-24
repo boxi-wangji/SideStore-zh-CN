@@ -5,7 +5,7 @@
 	<key>ALTAnisetteURL</key>
 	<string>https://ani.sidestore.io</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>zh_CN</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -164,7 +164,7 @@
 		<string>_vnc._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>SideStore can use local network access to discover Bonjour (mDNS) services on your network. This is not required for core functionality.</string>
+	<string>SideStore 可使用本地网络权限发现局域网内的 Bonjour (mDNS) 服务与无线配对设备（非核心侧载所必需）。</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>RefreshAllIntent</string>
@@ -236,9 +236,9 @@
 		<string>processing</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>SideStore uses location updates to keep background operations active.</string>
+	<string>SideStore 使用低功耗位置更新以维持后台自动刷新任务正常运行。</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>SideStore uses location updates to keep background operations active.</string>
+	<string>SideStore 使用低功耗位置更新以维持后台自动刷新任务正常运行。</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -311,6 +311,14 @@
 				</array>
 			</dict>
 		</dict>
+	</array>
+	<key>CFBundleDisplayName</key>
+	<string>SideStore</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>zh_CN</string>
+		<string>zh-Hans</string>
+		<string>en</string>
 	</array>
 </dict>
 </plist>

@@ -36,35 +36,35 @@ final class ResignAltStoreViewController: UIViewController
         
         switch reason {
             case .expired:
-                reasonText = NSLocalizedString("The signing certificate used to install SideStore has expired.", comment: "")
+                reasonText = NSLocalizedString("用于安装 SideStore 的签名证书已过期。", comment: "")
             case .revoked:
-                reasonText = NSLocalizedString("The signing certificate used to install SideStore was revoked on the Apple Developer portal.", comment: "")
+                reasonText = NSLocalizedString("用于安装 SideStore 的签名证书已在 Apple 开发者中心被吊销。", comment: "")
             case .freeAccountLimitRevoked:
-                reasonText = NSLocalizedString("Free developer accounts are limited to 1 active signing certificate. Since the private key for the active certificate was not found on this device, SideStore will create a new certificate. This will automatically revoke the active certificate, which may disable installations on other devices or made by Xcode.", comment: "")
+                reasonText = NSLocalizedString("免费开发者账号最多只能同时拥有 1 张有效签名证书。由于本机未找到当前在线证书对应的私钥，SideStore 将为你创建新证书并自动吊销旧证书（可能影响你在其他设备或 Xcode 上的安装）。", comment: "")
             case .differentAccount:
-                reasonText = NSLocalizedString("The logged-in Apple ID account has changed.", comment: "")
+                reasonText = NSLocalizedString("当前登录的 Apple ID 账号已变更。", comment: "")
             case .differentTeam:
-                reasonText = NSLocalizedString("The active developer team has changed.", comment: "")
+                reasonText = NSLocalizedString("当前选用的开发者团队已变更。", comment: "")
             case .privateKeyLost:
-                reasonText = NSLocalizedString("The private key for the active signing certificate is missing from this device's keychain.", comment: "")
+                reasonText = NSLocalizedString("本机钥匙串中缺少当前签名证书对应的私钥。", comment: "")
             case .externalSigner:
-                reasonText = NSLocalizedString("SideStore was installed by a different signing tool (like Xcode or AltStore).", comment: "")
+                reasonText = NSLocalizedString("SideStore 是由其他签名工具（如 Xcode、AltServer 或 iloader）安装的。", comment: "")
             case .missingProfile:
-                reasonText = NSLocalizedString("The provisioning profile for SideStore is missing or invalid.", comment: "")
+                reasonText = NSLocalizedString("SideStore 的内嵌描述文件缺失或无效。", comment: "")
             case .missingCertificate:
-                reasonText = NSLocalizedString("The signing certificate could not be extracted from SideStore's binary.", comment: "")
+                reasonText = NSLocalizedString("无法从 SideStore 主程序二进制中提取签名证书信息。", comment: "")
         }
         
         let isRevocationExpected = (reason == .privateKeyLost || reason == .freeAccountLimitRevoked)
         let buttonTitle = isRevocationExpected ?
-            NSLocalizedString("Revoke and Resign Now", comment: "") :
-            NSLocalizedString("Resign Now", comment: "")
+            NSLocalizedString("吊销旧证书并立即重签", comment: "") :
+            NSLocalizedString("立即重签", comment: "")
         self.reinstallButton.setTitle(buttonTitle, for: .normal)
         self.reinstallButton.fontSize = 15
         
-        let header = NSLocalizedString("Signing certificate mismatch detected.", comment: "")
-        let paragraph1 = NSLocalizedString("To ensure you can continue using SideStore, \nthe app must be reinstalled now using the new certificate. Otherwise, you will be unable to refresh or open SideStore once the old certificate expires.", comment: "")
-        let paragraph2 = NSLocalizedString("This reinstallation registers the new signature with the OS and will terminate SideStore. You can reopen SideStore immediately once reinstallation is completed.", comment: "")
+        let header = NSLocalizedString("检测到签名证书不匹配。", comment: "")
+        let paragraph1 = NSLocalizedString("为确保后续能正常续期使用，\n现在需要使用新证书重新覆盖安装 SideStore，否则旧证书到期后将无法打开或刷新。", comment: "")
+        let paragraph2 = NSLocalizedString("重新安装会向 iOS 注册新签名并自动退出当前进程，安装完成后重新点开桌面上的 SideStore 即可。", comment: "")
         
         let fullText = "\(header)\n\n\(paragraph1)\n\n\(paragraph2)"
         let attributedString = NSMutableAttributedString(string: fullText)
@@ -84,7 +84,7 @@ final class ResignAltStoreViewController: UIViewController
         
         // Reason Bold Prefix
         let reasonLabel = UILabel()
-        reasonLabel.text = NSLocalizedString("Reason:", comment: "")
+        reasonLabel.text = NSLocalizedString("原因：", comment: "")
         reasonLabel.textColor = .white
         reasonLabel.font = UIFont.boldSystemFont(ofSize: 14)
         reasonLabel.setContentHuggingPriority(.required, for: .horizontal)
@@ -152,11 +152,11 @@ private extension ResignAltStoreViewController
                             return
                         }
                         
-                        let alertController = UIAlertController(title: NSLocalizedString("Failed to Resign SideStore", comment: ""), message: error.localizedFailureReason ?? error.localizedDescription, preferredStyle: .alert)
-                        alertController.addAction(UIAlertAction(title: NSLocalizedString("Try Again", comment: ""), style: .default, handler: { (action) in
+                        let alertController = UIAlertController(title: NSLocalizedString("重签 SideStore 失败", comment: ""), message: error.localizedFailureReason ?? error.localizedDescription, preferredStyle: .alert)
+                        alertController.addAction(UIAlertAction(title: NSLocalizedString("重试", comment: ""), style: .default, handler: { (action) in
                             refresh()
                         }))
-                        alertController.addAction(UIAlertAction(title: NSLocalizedString("Resign Later", comment: ""), style: .cancel, handler: { (action) in
+                        alertController.addAction(UIAlertAction(title: NSLocalizedString("稍后重签", comment: ""), style: .cancel, handler: { (action) in
                             self.completionHandler?(.failure(error))
                         }))
                         

@@ -105,7 +105,7 @@ public extension ALTErrorCode
 {
     static var errorDomain: String {
         let typeName = String(reflecting: Self.self) // "\(Self.self)" doesn't include module name, but String(reflecting:) does.
-        let errorDomain = typeName.replacingOccurrences(of: "ErrorCode", with: "Error")
+        let errorDomain = typeName.replacingOccurrences(of: "ErrorCode", with: "错误")
         return errorDomain
     }
 }

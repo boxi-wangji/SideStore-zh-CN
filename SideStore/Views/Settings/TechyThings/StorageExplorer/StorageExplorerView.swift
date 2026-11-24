@@ -40,9 +40,9 @@ public struct StorageExplorerView: View {
     public var body: some View {
         List {
             Section(
-                header: Text("App Storage Containers"),
+                header: Text("SideStore 存储容器目录"),
                 footer: StorageExplorerFooterView(
-                    appStorageUsedString: appStorageUsedString.isEmpty ? "Calculating..." : appStorageUsedString,
+                    appStorageUsedString: appStorageUsedString.isEmpty ? "正在计算…" : appStorageUsedString,
                     freeHardwareSpaceString: freeHardwareSpaceString,
                     totalHardwareSpaceString: totalHardwareSpaceString
                 )
@@ -58,7 +58,7 @@ public struct StorageExplorerView: View {
         #else
         .listStyle(.grouped)
         #endif
-        .navigationTitle("Storage Explorer")
+        .navigationTitle("存储空间浏览")
         .onAppear {
             verboseLog("[StorageExplorerView] onAppear triggered")
             self.loadLocations()
@@ -88,7 +88,7 @@ public struct StorageExplorerView: View {
             // 1. Private Documents
             if let docsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first {
                 locs.append(StorageLocation(
-                    name: "Private Documents",
+                    name: "应用私有文稿目录 (Documents)",
                     subtitle: docsURL.path,
                     iconName: "folder.badge.gearshape",
                     url: docsURL
@@ -102,7 +102,7 @@ public struct StorageExplorerView: View {
                    !seenGroupPaths.contains(groupURL.path) {
                     seenGroupPaths.insert(groupURL.path)
                     locs.append(StorageLocation(
-                        name: "App Group Container (\(groupID))",
+                        name: "共享应用组容器 (\(groupID))",
                         subtitle: groupURL.path,
                         iconName: "shippingbox",
                         url: groupURL
@@ -113,7 +113,7 @@ public struct StorageExplorerView: View {
             // 3. App Backups Directory
             if let backupsURL = fileManager.appBackupsDirectory {
                 locs.append(StorageLocation(
-                    name: "App Backups Directory",
+                    name: "应用数据备份目录 (Backups)",
                     subtitle: backupsURL.path,
                     iconName: "archivebox",
                     url: backupsURL
@@ -123,7 +123,7 @@ public struct StorageExplorerView: View {
             // 4. Temporary Directory
             let tmpURL = fileManager.temporaryDirectory
             locs.append(StorageLocation(
-                name: "Temporary Directory (tmp)",
+                name: "临时缓存目录 (tmp)",
                 subtitle: tmpURL.path,
                 iconName: "trash.circle",
                 url: tmpURL
@@ -289,7 +289,7 @@ private struct StorageExplorerFooterView: View {
         VStack(alignment: .center, spacing: 5) {
             if !appStorageUsedString.isEmpty {
                 HStack(spacing: 4) {
-                    Text("App Storage Used:")
+                    Text("SideStore 已用空间：")
                         .font(.footnote.weight(.semibold))
                         .foregroundColor(.secondary)
                     Text(appStorageUsedString)
@@ -299,7 +299,7 @@ private struct StorageExplorerFooterView: View {
             }
             if !freeHardwareSpaceString.isEmpty {
                 HStack(spacing: 4) {
-                    Text("Available Space:")
+                    Text("设备可用空间：")
                         .font(.footnote.weight(.semibold))
                         .foregroundColor(.secondary)
                     Text(freeHardwareSpaceString)
@@ -309,7 +309,7 @@ private struct StorageExplorerFooterView: View {
             }
             if !totalHardwareSpaceString.isEmpty {
                 HStack(spacing: 4) {
-                    Text("Total Space:")
+                    Text("设备总容量：")
                         .font(.footnote.weight(.semibold))
                         .foregroundColor(.secondary)
                     Text(totalHardwareSpaceString)

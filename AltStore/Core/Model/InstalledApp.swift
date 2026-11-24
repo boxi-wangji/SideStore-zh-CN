@@ -269,7 +269,7 @@ public class InstalledApp: BaseEntity, InstalledAppProtocol
         self.expirationDate = self.refreshedDate.addingTimeInterval(60 * 60 * 24 * 7)
         #else
         guard let expirationDate = resignedAppBundle.provisioningProfile?.expirationDate else {
-            throw ALTError.invalidApp(reason: "The app is missing a valid provisioning profile.")
+            throw ALTError.invalidApp(reason: "该应用缺少有效的签名描述文件 (Provisioning Profile)。")
         }
         self.expirationDate = expirationDate
         #endif

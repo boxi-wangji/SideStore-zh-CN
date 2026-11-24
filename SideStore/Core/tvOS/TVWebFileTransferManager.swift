@@ -60,10 +60,10 @@ public final class TVWebFileTransferManager: @unchecked Sendable {
         DispatchQueue.main.async{
             let alert = UIAlertController(
                 title: title,
-                message: NSLocalizedString("Open this URL on your iPhone, iPad, or Mac on the same Wi-Fi network to upload:\n\n\(serverURL)", comment: ""),
+                message: NSLocalizedString("请在同一局域网 Wi-Fi 下的手机、平板或电脑浏览器中打开以下地址上传文件：\n\n\(serverURL)", comment: ""),
                 preferredStyle: .alert
             )
-            alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("取消", comment: ""), style: .cancel) { [weak self] _ in
                 self?.stop()
                 completion(nil)
             })
@@ -91,10 +91,10 @@ public final class TVWebFileTransferManager: @unchecked Sendable {
         DispatchQueue.main.async {
             let alert = UIAlertController(
                 title: title,
-                message: NSLocalizedString("Open this URL on your iPhone, iPad, or Mac on the same Wi-Fi network to download '\(fileURL.lastPathComponent)':\n\n\(serverURL)", comment: ""),
+                message: NSLocalizedString("请在同一局域网 Wi-Fi 下的浏览器中打开以下地址下载「\(fileURL.lastPathComponent)」：\n\n\(serverURL)", comment: ""),
                 preferredStyle: .alert
             )
-            alert.addAction(UIAlertAction(title: NSLocalizedString("Done", comment: ""), style: .default) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("完成", comment: ""), style: .default) { [weak self] _ in
                 self?.stop()
                 completion?()
             })

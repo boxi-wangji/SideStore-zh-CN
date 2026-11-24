@@ -30,10 +30,10 @@ struct WirelessPairTargetDialog: View {
             }
             #if !os(tvOS)
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            .navigationBarTitle(viewModel.dialogMode == .client ? "Select Device To Pair" : "Select Server Interface", displayMode: .inline)
+            .navigationBarTitle(viewModel.dialogMode == .client ? "选择要配对的目标设备" : "选择配对监听网卡", displayMode: .inline)
             #else
             .background(Color.black.ignoresSafeArea())
-            .navigationTitle(viewModel.dialogMode == .client ? "Select Device To Pair" : "Select Server Interface")
+            .navigationTitle(viewModel.dialogMode == .client ? "选择要配对的目标设备" : "选择配对监听网卡")
             #endif
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -51,7 +51,7 @@ struct WirelessPairTargetDialog: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    SwiftUI.Button("Select") {
+                    SwiftUI.Button("选择") {
                         debugLog("[WirelessPairTargetDialog] Select button tapped (mode=\(viewModel.dialogMode.rawValue))")
                         viewModel.confirmSelection()
                     }
@@ -73,14 +73,14 @@ struct WirelessPairTargetDialog: View {
     @ViewBuilder
     private var serverModeContent: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("LOCAL NETWORK INTERFACES")
+            Text("本机局域网接口")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 4)
             
             if viewModel.activeInterfaces.isEmpty {
-                Text("No active local interfaces detected.")
+                Text("未检测到活动的本地网络接口。")
                     .font(.footnote)
                     .foregroundColor(.secondary)
                     .padding(.vertical, 12)
@@ -194,7 +194,7 @@ struct WirelessPairTargetDialog: View {
     private var clientModeContent: some View {
         // Section: Configured Fallback Endpoint
         VStack(alignment: .leading, spacing: 10) {
-            Text("CONFIGURED ENDPOINT")
+            Text("已手动配置的目标地址")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
@@ -205,7 +205,7 @@ struct WirelessPairTargetDialog: View {
         
         // Section: Discovered Devices
         VStack(alignment: .leading, spacing: 10) {
-            Text("DISCOVERED NEARBY")
+            Text("局域网内发现的可配对设备")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
@@ -216,11 +216,11 @@ struct WirelessPairTargetDialog: View {
                     if viewModel.isScanning {
                         ProgressView()
                             .scaleEffect(0.7)
-                        Text("Searching local network for devices…")
+                        Text("正在局域网内扫描可配对设备…")
                             .font(.footnote)
                             .foregroundColor(.secondary)
                     } else {
-                        Text("No pairing targets found via Bonjour.")
+                        Text("暂未通过 Bonjour 发现可配对目标。")
                             .font(.footnote)
                             .foregroundColor(.secondary)
                     }
@@ -286,15 +286,15 @@ struct WirelessPairTargetDialog: View {
                     
                     if (target.ipv4 == nil || target.ipv4?.isEmpty == true) && (target.ipv6 == nil || target.ipv6?.isEmpty == true) {
                         if !portString.isEmpty {
-                            Text("Port: \(portString)")
+                            Text("端口：\(portString)")
                                 .font(.caption.monospaced())
                                 .foregroundColor(.secondary)
                         } else if viewModel.isScanning {
-                            Text("Resolving IP address…")
+                            Text("正在解析 IP 地址…")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         } else {
-                            Text("Address unavailable")
+                            Text("地址暂不可用")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -344,7 +344,7 @@ struct WirelessPairTargetDialog: View {
                         .foregroundColor(isSelected ? .green : Color(.tertiaryLabel))
                 }
                 
-                Text("Configured Target")
+                Text("手动配置目标")
                     .font(.footnote)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)

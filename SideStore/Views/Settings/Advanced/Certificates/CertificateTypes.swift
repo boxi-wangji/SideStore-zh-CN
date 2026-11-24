@@ -9,21 +9,21 @@
 import SideSign
 
 enum SortOption: String, CaseIterable, Identifiable {
-    case creationDate = "Creation Date"
-    case expiryDate   = "Expiry Date"
-    case name         = "Name"
-    case keys         = "Keys"
-    case type         = "Type"
+    case creationDate = "创建时间"
+    case expiryDate   = "到期时间"
+    case name         = "名称"
+    case keys         = "密钥状态"
+    case type         = "证书类型"
     var id: String { rawValue }
 }
 
 enum GroupOption: String, CaseIterable, Identifiable {
-    case none         = "None"
-    case creationDate = "Creation Date"
-    case expiryDate   = "Expiry Date"
-    case name         = "Name"
-    case keys         = "Keys"
-    case type         = "Type"
+    case none         = "不分组"
+    case creationDate = "创建时间"
+    case expiryDate   = "到期时间"
+    case name         = "名称"
+    case keys         = "密钥状态"
+    case type         = "证书类型"
     var id: String { rawValue }
 }
 

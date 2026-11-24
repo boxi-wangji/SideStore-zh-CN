@@ -19,13 +19,13 @@ public struct ThemePreset: Identifiable, Equatable {
     }
     
     public static let presets: [ThemePreset] = [
-        ThemePreset(id: "classic", name: "SideStore Teal", hex: "#19D3B5"),
-        ThemePreset(id: "neonViolet", name: "Neon Violet", hex: "#8B5CF6"),
-        ThemePreset(id: "sunsetCrimson", name: "Sunset Crimson", hex: "#EF4444"),
-        ThemePreset(id: "sapphireBlue", name: "Sapphire Blue", hex: "#3B82F6"),
-        ThemePreset(id: "cyberpunkGold", name: "Cyberpunk Gold", hex: "#F59E0B"),
-        ThemePreset(id: "emeraldMint", name: "Emerald Mint", hex: "#10B981"),
-        ThemePreset(id: "electricPink", name: "Electric Pink", hex: "#EC4899")
+        ThemePreset(id: "classic", name: "经典青绿 (SideStore)", hex: "#19D3B5"),
+        ThemePreset(id: "neonViolet", name: "霓虹紫罗兰", hex: "#8B5CF6"),
+        ThemePreset(id: "sunsetCrimson", name: "落日绯红", hex: "#EF4444"),
+        ThemePreset(id: "sapphireBlue", name: "宝石蔚蓝", hex: "#3B82F6"),
+        ThemePreset(id: "cyberpunkGold", name: "赛博流金", hex: "#F59E0B"),
+        ThemePreset(id: "emeraldMint", name: "翡翠薄荷绿", hex: "#10B981"),
+        ThemePreset(id: "electricPink", name: "电光樱粉", hex: "#EC4899")
     ]
 }
 

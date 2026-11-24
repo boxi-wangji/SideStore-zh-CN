@@ -52,15 +52,15 @@ final class PipelineHandler: PipelineExecutionHandler,
             return false
         }
         
-        let title = NSLocalizedString("Bundle ID Mismatch", comment: "")
-        let message = String(format: NSLocalizedString("The app you are installing has a bundle ID (%@) that does not match the active app (%@). Would you like to proceed?", comment: ""), targetID, activeEffectiveID)
+        let title = NSLocalizedString("Bundle ID 包名不一致", comment: "")
+        let message = String(format: NSLocalizedString("即将安装的应用包名 (%@) 与当前已安装版本 (%@) 不一致，是否仍要继续？", comment: ""), targetID, activeEffectiveID)
         
         return await withCheckedContinuation { continuation in
             let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: UIAlertAction.cancel.title, style: UIAlertAction.cancel.style) { _ in
                 continuation.resume(returning: false)
             })
-            alertController.addAction(UIAlertAction(title: NSLocalizedString("Proceed", comment: ""), style: .default) { _ in
+            alertController.addAction(UIAlertAction(title: NSLocalizedString("继续", comment: ""), style: .default) { _ in
                 continuation.resume(returning: true)
             })
             presenter.present(alertController, animated: true)
@@ -101,28 +101,28 @@ final class PipelineHandler: PipelineExecutionHandler,
         return try await withCheckedThrowingContinuation { continuation in
             let firstSentence: String
             if UserDefaults.standard.activeAppLimitIncludesExtensions {
-                firstSentence = NSLocalizedString("Non-developer Apple IDs are limited to 3 active apps and app extensions.", comment: "")
+                firstSentence = NSLocalizedString("免费 Apple ID 最多只能同时激活 3 个应用及应用扩展。", comment: "")
             } else {
-                firstSentence = NSLocalizedString("Non-developer Apple IDs are limited to creating 10 App IDs per week.", comment: "")
+                firstSentence = NSLocalizedString("免费 Apple ID 每 7 天最多只能注册 10 个新应用 ID。", comment: "")
             }
             
-            let message = firstSentence + " " + NSLocalizedString("Would you like to remove this app's extensions so they don't count towards your limit? There are \(appBundle.appExtensions.count) Extensions", comment: "")
+            let message = firstSentence + " " + NSLocalizedString("是否移除此应用附带的扩展组件以节省配额？（当前共含 \(appBundle.appExtensions.count) 个扩展）", comment: "")
             
-            let alertController = UIAlertController(title: NSLocalizedString("App Contains Extensions", comment: ""), message: message, preferredStyle: .alert)
+            let alertController = UIAlertController(title: NSLocalizedString("应用包含扩展插件", comment: ""), message: message, preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: UIAlertAction.cancel.title, style: UIAlertAction.cancel.style, handler: { _ in
                 continuation.resume(throwing: OperationError.cancelled)
             }))
-            alertController.addAction(UIAlertAction(title: NSLocalizedString("Keep App Extensions (Use Main Profile)", comment: ""), style: .default) { _ in
+            alertController.addAction(UIAlertAction(title: NSLocalizedString("保留扩展（共用主描述文件，省配额）", comment: ""), style: .default) { _ in
                 continuation.resume(returning: .keepAll(useMainProfile: true))
             })
-            alertController.addAction(UIAlertAction(title: NSLocalizedString("Keep App Extensions (Register App ID for Each Extension)", comment: ""), style: .default) { _ in
+            alertController.addAction(UIAlertAction(title: NSLocalizedString("保留扩展（为每个扩展单独注册应用 ID）", comment: ""), style: .default) { _ in
                 continuation.resume(returning: .keepAll(useMainProfile: false))
             })
-            alertController.addAction(UIAlertAction(title: NSLocalizedString("Remove App Extensions", comment: ""), style: .destructive) { _ in
+            alertController.addAction(UIAlertAction(title: NSLocalizedString("移除全部应用扩展", comment: ""), style: .destructive) { _ in
                 continuation.resume(returning: .removeAll)
             })
             
-            alertController.addAction(UIAlertAction(title: NSLocalizedString("Choose App Extensions", comment: ""), style: .default) { _ in
+            alertController.addAction(UIAlertAction(title: NSLocalizedString("手动勾选要保留的扩展", comment: ""), style: .default) { _ in
                 let popoverContentController = AppExtensionViewHostingController(extensions: appBundle.appExtensions) { selection in
                     continuation.resume(returning: .removeSelected(Set(selection)))
                 }
@@ -162,15 +162,15 @@ final class PipelineHandler: PipelineExecutionHandler,
             return false
         }
         
-        let title = NSLocalizedString("Unsupported iOS Version", comment: "")
-        let message = errorDescription + "\n\n" + NSLocalizedString("Would you like to download the last version compatible with this device instead?", comment: "")
+        let title = NSLocalizedString("当前 iOS 版本不兼容", comment: "")
+        let message = errorDescription + "\n\n" + NSLocalizedString("是否改为下载兼容此设备的最后一个历史版本？", comment: "")
         
         return await withCheckedContinuation { continuation in
             let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: UIAlertAction.cancel.title, style: UIAlertAction.cancel.style) { _ in
                 continuation.resume(returning: false)
             })
-            alertController.addAction(UIAlertAction(title: String(format: NSLocalizedString("Download %@ %@", comment: ""), appName, compatibleVersion), style: .default) { _ in
+            alertController.addAction(UIAlertAction(title: String(format: NSLocalizedString("下载 %@ %@", comment: ""), appName, compatibleVersion), style: .default) { _ in
                 continuation.resume(returning: true)
             })
             presenter.present(alertController, animated: true)
@@ -181,13 +181,13 @@ final class PipelineHandler: PipelineExecutionHandler,
         await withCheckedContinuation { continuation in
             Task { @MainActor in
                 let alert = UIAlertController(
-                    title: "Finish Refresh",
+                    title: "完成刷新",
                     message: """
                     To finish refreshing, SideStore must be moved to the background. To do this, you can either go to the Home Screen manually or by hitting Continue. Please reopen SideStore after doing this.
                     """,
                     preferredStyle: .alert
                 )
-                alert.addAction(UIAlertAction(title: NSLocalizedString("Continue", comment: ""), style: .default, handler: { _ in
+                alert.addAction(UIAlertAction(title: NSLocalizedString("继续", comment: ""), style: .default, handler: { _ in
                     continuation.resume()
                 }))
                 
@@ -344,8 +344,8 @@ final class PipelineHandler: PipelineExecutionHandler,
             return (initialBundleID, true)
         }
         
-        let titleText = NSLocalizedString("AppID Customization", comment: "")
-        let messageText = NSLocalizedString("Customize the AppID if required and press 'Confirm' to proceed.", comment: "")
+        let titleText = NSLocalizedString("自定义应用包名 (App ID)", comment: "")
+        let messageText = NSLocalizedString("如需多开或修改包名请在下方调整，点击「确认」继续安装。", comment: "")
         
         let alert = UIAlertController(
             title: titleText,
@@ -432,7 +432,7 @@ final class PipelineHandler: PipelineExecutionHandler,
         }
         
         return await withCheckedContinuation { continuation in
-            let okAction = UIAlertAction(title: NSLocalizedString("Confirm", comment: ""), style: .default) { _ in
+            let okAction = UIAlertAction(title: NSLocalizedString("确认", comment: ""), style: .default) { _ in
                 let baseID = checkboxView.cleanBaseID()
                 let customID = InfoPlistParser.sanitizeBundleID(!baseID.isEmpty ? baseID : cleanInitialID)
                 let appendTeamID = checkboxView.isChecked
@@ -440,7 +440,7 @@ final class PipelineHandler: PipelineExecutionHandler,
                 continuation.resume(returning: (customID, appendTeamID))
             }
             
-            let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
+            let cancelAction = UIAlertAction(title: NSLocalizedString("取消", comment: ""), style: .cancel) { _ in
                 continuation.resume(returning: nil)
             }
             alert.addAction(cancelAction)
@@ -456,17 +456,17 @@ final class PipelineHandler: PipelineExecutionHandler,
             return .correctAndProceed(correctedGroup)
         }
         
-        let title = NSLocalizedString("App Group Discrepancy", comment: "")
-        let message = String(format: NSLocalizedString("The app group '%@' does not match the app's bundle ID casing. Would you like to correct it to '%@'?", comment: ""), originalGroup, correctedGroup)
+        let title = NSLocalizedString("应用组 (App Group) 大小写不一致", comment: "")
+        let message = String(format: NSLocalizedString("应用组「%@」与主包名大小写不一致，是否自动修正为「%@」？", comment: ""), originalGroup, correctedGroup)
         
         return await withCheckedContinuation { continuation in
             let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
             
-            alert.addAction(UIAlertAction(title: NSLocalizedString("Correct & Proceed", comment: ""), style: .default) { _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("自动修正并继续", comment: ""), style: .default) { _ in
                 continuation.resume(returning: .correctAndProceed(correctedGroup))
             })
             
-            alert.addAction(UIAlertAction(title: NSLocalizedString("Keep Original", comment: ""), style: .destructive) { _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("保留原样", comment: ""), style: .destructive) { _ in
                 continuation.resume(returning: .keepOriginal(originalGroup))
             })
             
@@ -485,12 +485,12 @@ final class PipelineHandler: PipelineExecutionHandler,
         }
 
         return try await withCheckedThrowingContinuation { continuation in
-            let title = NSLocalizedString("Customize App Icon", comment: "")
-            let message = String(format: NSLocalizedString("Would you like to choose a custom icon for '%@' or keep the original icon?", comment: ""), appName)
+            let title = NSLocalizedString("自定义应用图标", comment: "")
+            let message = String(format: NSLocalizedString("是否为「%@」更换自定义桌面图标？", comment: ""), appName)
 
             let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
 
-            alert.addAction(UIAlertAction(title: NSLocalizedString("Choose from Photos", comment: ""), style: .default) { _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("从相册选取图标", comment: ""), style: .default) { _ in
                 #if !os(tvOS)
                 let pickerDelegate = ImagePickerDelegateHandler { image in
                     guard let image = image,
@@ -518,7 +518,7 @@ final class PipelineHandler: PipelineExecutionHandler,
                 #else
                 TVWebFileTransferManager.shared.startImport(
                     acceptedExtensions: ["png", "jpg", "jpeg"],
-                    title: "Upload Custom App Icon",
+                    title: "上传自定义应用图标",
                     presentingVC: presenter
                 ) { fileURL in
                     guard let fileURL = fileURL,
@@ -540,7 +540,7 @@ final class PipelineHandler: PipelineExecutionHandler,
                 #endif
             })
 
-            alert.addAction(UIAlertAction(title: NSLocalizedString("Keep Original Icon", comment: ""), style: .default) { _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("保留默认图标", comment: ""), style: .default) { _ in
                 continuation.resume(returning: nil)
             })
 
@@ -564,12 +564,12 @@ final class PipelineHandler: PipelineExecutionHandler,
         }
 
         return try await withCheckedThrowingContinuation { continuation in
-            let title = NSLocalizedString("Select Provisioning Profile", comment: "")
-            let message = String(format: NSLocalizedString("Choose a provisioning profile for '%@' (%@), or use the default automatic profile.", comment: ""), appName, bundleID)
+            let title = NSLocalizedString("选择签名描述文件", comment: "")
+            let message = String(format: NSLocalizedString("请为「%@」(%@) 选择要使用的描述文件，或使用默认自动签发描述文件。", comment: ""), appName, bundleID)
 
             let alert = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
 
-            alert.addAction(UIAlertAction(title: NSLocalizedString("Default (Automatic Team Profile)", comment: ""), style: .default) { _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("默认（自动签发团队描述文件）", comment: ""), style: .default) { _ in
                 continuation.resume(returning: .defaultProfile)
             })
 

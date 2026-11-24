@@ -78,7 +78,7 @@ class ReviewPermissionsViewController: UICollectionViewController
         self.navigationItem.standardAppearance = appearance
         #endif
         
-        self.title = NSLocalizedString("Review Permissions", comment: "")
+        self.title = NSLocalizedString("确认应用权限", comment: "")
         
         let collectionViewLayout = self.makeLayout()
         self.collectionView.collectionViewLayout = collectionViewLayout
@@ -194,14 +194,14 @@ extension ReviewPermissionsViewController
                 
                 switch self.permissionsMode
                 {
-                case .all: configuration.secondaryText = String(localized: "“\(self.app.name)” will be automatically given these permissions once installed.")
-                case .added: configuration.secondaryText = String(localized: "This version of “\(self.app.name)” requires additional permissions.")
+                case .all: configuration.secondaryText = String(localized: "「\(self.app.name)」安装后将具备以下声明权限。")
+                case .added: configuration.secondaryText = String(localized: "此版本的「\(self.app.name)」新增了额外权限请求。")
                 case .none: break
                 }
                 
             case .unknown:
-                configuration.text = NSLocalizedString("Additional Permissions", comment: "")
-                configuration.secondaryText = String(format: NSLocalizedString("These are permissions required by “%@” that SideStore does not recognize. Make sure you understand them before continuing.", comment: ""), self.app.name)
+                configuration.text = NSLocalizedString("未识别的附加权限", comment: "")
+                configuration.secondaryText = String(format: NSLocalizedString("以下是「%@」声明但 SideStore 未收录说明的权限，请在确认信任后再继续安装。", comment: ""), self.app.name)
                 
             case .approve: break
             }
@@ -220,7 +220,7 @@ extension ReviewPermissionsViewController
             let cell = cell as! UICollectionViewListCell
             
             var config = cell.defaultContentConfiguration()
-            config.text = NSLocalizedString("Approve", comment: "")
+            config.text = NSLocalizedString("允许并继续", comment: "")
             config.textProperties.color = .white
             config.textProperties.font = .preferredFont(forTextStyle: .headline)
             config.textProperties.alignment = .center

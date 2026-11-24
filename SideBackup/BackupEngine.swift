@@ -27,28 +27,28 @@ struct BackupErrorLocalizer {
     static func description(for context: BackupError.Context) -> String {
         switch context {
         case .createBackup:
-            return NSLocalizedString("Unable to create backup directory.", comment: "")
+            return NSLocalizedString("无法创建应用备份目录。", comment: "")
         case .createGroupBackup:
-            return NSLocalizedString("Unable to create app group backup directory.", comment: "")
+            return NSLocalizedString("无法创建应用组备份目录。", comment: "")
         case .accessBackup:
-            return NSLocalizedString("Unable to access backup.", comment: "")
+            return NSLocalizedString("无法访问本地备份存档。", comment: "")
         case .readGroupBackup:
-            return NSLocalizedString("Unable to read app group backup.", comment: "")
+            return NSLocalizedString("无法读取应用组备份数据。", comment: "")
         }
     }
     
     static func failureReason(for code: BackupError.Code) -> String {
         switch code {
         case .invalidBundleID:
-            return NSLocalizedString("The bundle identifier is invalid.", comment: "")
+            return NSLocalizedString("应用的 Bundle ID 包名无效。", comment: "")
         case .appGroupNotFound(let appGroup):
             if let appGroup = appGroup {
-                return String(format: NSLocalizedString("The app group “%@” could not be found.", comment: ""), appGroup)
+                return String(format: NSLocalizedString("未找到共享应用组容器「%@」。", comment: ""), appGroup)
             } else {
-                return NSLocalizedString("The AltStore app group could not be found.", comment: "")
+                return NSLocalizedString("未找到 SideStore 共享应用组容器。", comment: "")
             }
         case .randomError:
-            return NSLocalizedString("A random error occurred.", comment: "")
+            return NSLocalizedString("发生意外错误。", comment: "")
         }
     }
 }
@@ -122,7 +122,7 @@ struct BackupError: ALTLocalizedError {
         self.failure = BackupErrorLocalizer.description(for: context)
         self.sourceFile = file
         self.sourceFileLine = line
-        self.errorTitle = NSLocalizedString("Backup Error", comment: "")
+        self.errorTitle = NSLocalizedString("备份辅助错误", comment: "")
         self.errorFailure = self.failure
     }
 }

@@ -45,7 +45,7 @@ struct BundleResourceBrowserView: View {
     var body: some View {
         List {
             if filteredItems.isEmpty {
-                Text(items.isEmpty ? "Empty directory" : "No results")
+                Text(items.isEmpty ? "空文件夹" : "无匹配结果")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             } else {
@@ -72,13 +72,13 @@ struct BundleResourceBrowserView: View {
         .listStyle(GroupedListStyle())
         #endif
         .navigationTitle(isSelecting
-            ? (selectedURLs.isEmpty ? "Select Files" : "\(selectedURLs.count) selected")
+            ? (selectedURLs.isEmpty ? "选择文件" : "已选 \(selectedURLs.count) 项")
             : title)
-        .searchable(text: $searchQuery, prompt: "Search files")
+        .searchable(text: $searchQuery, prompt: "搜索文件")
         .toolbar {
             // Trailing: Select / Done
             ToolbarItem(placement: .navigationBarTrailing) {
-                SwiftUI.Button(isSelecting ? "Done" : "Select") {
+                SwiftUI.Button(isSelecting ? "完成" : "选择") {
                     withAnimation {
                         isSelecting.toggle()
                         if !isSelecting { selectedURLs.removeAll() }
@@ -370,7 +370,7 @@ struct IPAContentsView: View {
                 VStack(spacing: 16) {
                     ProgressView()
                         .scaleEffect(1.5)
-                    Text("Extracting \(ipaURL.lastPathComponent)...")
+                    Text("正在解压 \(ipaURL.lastPathComponent)…")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -384,7 +384,7 @@ struct IPAContentsView: View {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 44))
                         .foregroundColor(.orange)
-                    Text("Extraction Failed")
+                    Text("解压失败")
                         .font(.headline)
                     Text(error)
                         .font(.subheadline)
@@ -454,7 +454,7 @@ struct FullAppBundleView: View {
             }
 
             // General Info — all from Info.plist
-            Section(header: Text("General Info")) {
+            Section(header: Text("基础信息")) {
                 let plist = infoPlist
                 let bundleID = plist?["CFBundleIdentifier"] as? String ?? "N/A"
                 let short = plist?["CFBundleShortVersionString"] as? String
@@ -464,17 +464,17 @@ struct FullAppBundleView: View {
                     return short ?? build ?? "N/A"
                 }()
 
-                InfoRow(label: "Bundle Identifier", value: bundleID)
-                InfoRow(label: "Version", value: versionStr)
+                InfoRow(label: "Bundle ID 包名", value: bundleID)
+                InfoRow(label: "版本", value: versionStr)
                 if let minOS = plist?["MinimumOSVersion"] as? String {
-                    InfoRow(label: "Min iOS", value: minOS)
+                    InfoRow(label: "最低 iOS 版本", value: minOS)
                 }
                 if let exec = plist?["CFBundleExecutable"] as? String {
                     let execURL = bundleURL.appendingPathComponent(exec)
                     if FileManager.default.fileExists(atPath: execURL.path) && CodeSignKit.MachOParser.isMachOBinary(at: execURL) {
                         NavigationLink(destination: MachOResourceViewer(url: execURL)) {
                             HStack {
-                                Text("Executable")
+                                Text("可执行文件")
                                     .font(.subheadline)
                                     .foregroundColor(.primary)
                                 Spacer()
@@ -484,14 +484,14 @@ struct FullAppBundleView: View {
                             }
                         }
                     } else {
-                        InfoRow(label: "Executable", value: exec)
+                        InfoRow(label: "可执行文件", value: exec)
                     }
                 }
             }
 
             // Provisioning Profile — from embedded.mobileprovision
             if let profile = provisioningProfile {
-                Section(header: Text("Provisioning Profile")) {
+                Section(header: Text("描述文件")) {
                     NavigationLink(destination: ProvisioningProfileDetailView(profile: profile, certificatesViewModel: certificatesViewModel)) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(profile.name)
@@ -499,7 +499,7 @@ struct FullAppBundleView: View {
                             Text("UUID: \(profile.uuid.uuidString)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text("Expires: \(formatDate(profile.expirationDate))")
+                            Text("到期：\(formatDate(profile.expirationDate))")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -511,7 +511,7 @@ struct FullAppBundleView: View {
             if let plist = infoPlist {
                 Section(header: Text("Info.plist")) {
                     NavigationLink(destination: InfoPlistContainerView(plist: plist)) {
-                        Text("View Info.plist (\(plist.count) keys)")
+                        Text("查看 Info.plist（共 \(plist.count) 个键）")
                             .font(.subheadline)
                     }
                 }
@@ -519,7 +519,7 @@ struct FullAppBundleView: View {
 
             // App Extensions
             if !appExtensions.isEmpty {
-                Section(header: Text("App Extensions (\(appExtensions.count))")) {
+                Section(header: Text("应用扩展 (\(appExtensions.count))")) {
                     ForEach(appExtensions, id: \.path) { extURL in
                         let extParser = try? InfoPlistParser(bundleURL: extURL)
                         let extName = extParser?.displayName
@@ -540,9 +540,9 @@ struct FullAppBundleView: View {
             }
 
             // Resources — recursive browser
-            Section(header: Text("Resources")) {
-                NavigationLink(destination: BundleResourceBrowserView(rootURL: bundleURL, title: "Bundle Contents")) {
-                    Text("Browse Bundle Contents")
+            Section(header: Text("包内资源浏览")) {
+                NavigationLink(destination: BundleResourceBrowserView(rootURL: bundleURL, title: "应用包目录结构")) {
+                    Text("浏览应用包内文件")
                         .font(.subheadline)
                 }
             }
@@ -579,7 +579,7 @@ struct PlistResourceViewer: View {
                 InfoPlistContainerView(plist: dict, title: url.lastPathComponent)
             } else {
                 ScrollView {
-                    Text(rawText.isEmpty ? "Loading..." : rawText)
+                    Text(rawText.isEmpty ? "正在加载…" : rawText)
                         .font(.system(size: 12, design: .monospaced))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
@@ -599,7 +599,7 @@ struct PlistResourceViewer: View {
             } else {
                 rawText = (try? String(contentsOf: url, encoding: .utf8))
                     ?? (try? String(contentsOf: url, encoding: .isoLatin1))
-                    ?? "(Cannot decode file)"
+                    ?? "（无法解码此文件）"
             }
         }
     }
@@ -624,7 +624,7 @@ struct ResourceImageViewer: View {
                     Image(systemName: "photo.slash")
                         .font(.system(size: 44))
                         .foregroundColor(.secondary)
-                    Text("Could not load image")
+                    Text("无法加载图片预览")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -651,7 +651,7 @@ struct ResourceTextViewer: View {
 
     var body: some View {
         ScrollView {
-            Text(content.isEmpty ? "Loading..." : content)
+            Text(content.isEmpty ? "正在加载…" : content)
                 .font(.system(size: 12, design: .monospaced))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
@@ -679,7 +679,7 @@ struct ResourceTextViewer: View {
             } else if let url = url {
                 content = (try? String(contentsOf: url, encoding: .utf8))
                     ?? (try? String(contentsOf: url, encoding: .isoLatin1))
-                    ?? "(Cannot decode file as text)"
+                    ?? "（无法以纯文本格式解码此文件）"
             }
         }
     }
@@ -730,9 +730,9 @@ struct ProvisioningProfileResourceViewer: View {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 44))
                         .foregroundColor(.orange)
-                    Text("Invalid Provisioning Profile")
+                    Text("无效的描述文件")
                         .font(.headline)
-                    Text("Could not decode provisioning profile from \(url.lastPathComponent).")
+                    Text("无法从 \(url.lastPathComponent) 解析描述文件数据。")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)

@@ -273,13 +273,13 @@ public struct InfoPlistCustomizationCoreView: View {
                     hideKeyboard()
                 }
             )
-            .navigationTitle("Customize Info.plist")
+            .navigationTitle("安装前自定义 Info.plist")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(
-                leading: SwiftUI.Button("Cancel") {
+                leading: SwiftUI.Button("取消") {
                     onCancel()
                 },
-                trailing: SwiftUI.Button("Proceed") {
+                trailing: SwiftUI.Button("继续") {
                     handleProceed()
                 }
                 .font(.system(size: 16, weight: .bold))
@@ -287,7 +287,7 @@ public struct InfoPlistCustomizationCoreView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    SwiftUI.Button("Done") {
+                    SwiftUI.Button("完成") {
                         hideKeyboard()
                     }
                 }
@@ -338,7 +338,7 @@ public struct InfoPlistCustomizationCoreView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    SwiftUI.Button("Done") {
+                    SwiftUI.Button("完成") {
                         hideKeyboard()
                     }
                 }
@@ -386,7 +386,7 @@ public struct InfoPlistCustomizationCoreView: View {
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.primary)
 
-                            Text(currentTarget.isExtension ? "Extension" : "Main App")
+                            Text(currentTarget.isExtension ? "应用扩展" : "主应用")
                                 .font(.system(size: 10, weight: .semibold))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -475,10 +475,10 @@ public struct InfoPlistCustomizationCoreView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Customize Info.plist")
+                Text("安装前自定义 Info.plist")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.primary)
-                Text("Review and adjust app metadata before installing")
+                Text("安装前检查与自定义应用名称、包名、最低系统版本及键值")
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
             }
@@ -509,12 +509,12 @@ public struct InfoPlistCustomizationCoreView: View {
 
     private var identitySection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            sectionHeader(title: "APP IDENTITY", icon: "app.badge.checkmark")
+            sectionHeader(title: "应用身份标识", icon: "app.badge.checkmark")
 
             VStack(spacing: 0) {
                 if currentTarget.isExtension {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Bundle Identifier")
+                        Text("Bundle ID 包名")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Text(bundleID)
@@ -522,7 +522,7 @@ public struct InfoPlistCustomizationCoreView: View {
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 8)
-                        Text("Extension bundle identifier is managed relative to the main application.")
+                        Text("应用扩展的包名会自动跟随主应用包名前缀联动调整。")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -530,7 +530,7 @@ public struct InfoPlistCustomizationCoreView: View {
                     .padding(.vertical, 10)
                 } else {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Bundle Identifier")
+                        Text("Bundle ID 包名")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         SuffixEnforcedTextField(
@@ -564,7 +564,7 @@ public struct InfoPlistCustomizationCoreView: View {
                         debugLog("[InfoPlistCustomizationCoreView] appendTeamID toggled to \(appendTeamID) -> bundleID='\(bundleID)'")
                     }) {
                         HStack {
-                            Text("Append Team ID to Bundle Identifier")
+                            Text("在包名末尾自动附加开发者团队 ID")
                                 .font(.system(size: 14, weight: .regular))
                                 .foregroundColor(.primary)
                             Spacer()
@@ -582,7 +582,7 @@ public struct InfoPlistCustomizationCoreView: View {
                 Divider().padding(.leading, 16)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Display Name")
+                    Text("桌面显示名称")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     TextField("My App", text: $displayName)
@@ -603,14 +603,14 @@ public struct InfoPlistCustomizationCoreView: View {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.orange)
-                    Text("Matches installed app \"\(existingName)\" — will update existing app")
+                    Text("匹配已安装应用「\(existingName)」— 将直接覆盖更新原应用")
                         .font(.footnote)
                         .foregroundColor(.orange)
                 }
                 .padding(.horizontal, 4)
                 .padding(.top, 2)
             } else {
-                Text("If the bundle ID is not present in the database, it will install as a separate app.")
+                Text("修改为未安装过的新包名即可实现应用多开共存。")
                     .font(.footnote)
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 4)
@@ -621,12 +621,12 @@ public struct InfoPlistCustomizationCoreView: View {
 
     private var versionSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            sectionHeader(title: "VERSIONING", icon: "number")
+            sectionHeader(title: "版本号与系统要求", icon: "number")
 
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Version")
+                        Text("版本")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         TextField("1.0.0", text: $versionString)
@@ -642,7 +642,7 @@ public struct InfoPlistCustomizationCoreView: View {
                     Divider().frame(height: 38)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Build")
+                        Text("编译号 (Build)")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         TextField("1", text: $buildNumber)
@@ -660,7 +660,7 @@ public struct InfoPlistCustomizationCoreView: View {
                 Divider().padding(.leading, 16)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Minimum iOS Version")
+                    Text("最低系统版本 (MinimumOSVersion)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     TextField("15.0", text: $minimumOSVersion)
@@ -680,15 +680,15 @@ public struct InfoPlistCustomizationCoreView: View {
 
     private var capabilitiesSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            sectionHeader(title: "CAPABILITIES & SHARING", icon: "folder.badge.gearshape")
+            sectionHeader(title: "文件共享能力", icon: "folder.badge.gearshape")
 
             VStack(spacing: 0) {
                 Toggle(isOn: $fileSharingEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Enable iTunes File Sharing")
+                        Text("开启「文件」App 与电脑文件共享")
                             .font(.system(size: 15))
                             .foregroundColor(.primary)
-                        Text("Exposes Documents directory via Finder/iTunes")
+                        Text("允许在系统「文件 -> 我的 iPhone」中直接访问此应用的文档目录")
                             .font(.footnote)
                             .foregroundColor(.secondary)
                     }
@@ -701,10 +701,10 @@ public struct InfoPlistCustomizationCoreView: View {
 
                 Toggle(isOn: $openingDocumentsInPlace) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Open Documents In Place")
+                        Text("允许外部直接原位打开编辑文档")
                             .font(.system(size: 15))
                             .foregroundColor(.primary)
-                        Text("Allows Files app to edit documents directly")
+                        Text("允许通过「文件」App 直接读写应用内文档而不创建副本")
                             .font(.footnote)
                             .foregroundColor(.secondary)
                     }
@@ -721,7 +721,7 @@ public struct InfoPlistCustomizationCoreView: View {
     private var advancedKeysSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                sectionHeader(title: "ALL RAW KEYS", icon: "ellipsis.curlybraces")
+                sectionHeader(title: "全部原始 Info.plist 键值", icon: "ellipsis.curlybraces")
                 Spacer()
                 SwiftUI.Button(action: {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -729,7 +729,7 @@ public struct InfoPlistCustomizationCoreView: View {
                     }
                 }) {
                     HStack(spacing: 4) {
-                        Text(isShowingRawKeys ? "Collapse" : "Expand (\(rawEntries.count))")
+                        Text(isShowingRawKeys ? "收起列表" : "展开全部 (\(rawEntries.count))")
                             .font(.system(size: 13, weight: .medium))
                         Image(systemName: isShowingRawKeys ? "chevron.up" : "chevron.down")
                             .font(.system(size: 11, weight: .semibold))
@@ -746,7 +746,7 @@ public struct InfoPlistCustomizationCoreView: View {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 14))
                                 .foregroundColor(.secondary)
-                            TextField("Filter keys...", text: $rawSearchQuery)
+                            TextField("过滤键名…", text: $rawSearchQuery)
                                 .font(.system(size: 14))
                                 .submitLabel(.done)
                                 .onSubmit { hideKeyboard() }
@@ -766,7 +766,7 @@ public struct InfoPlistCustomizationCoreView: View {
                         SwiftUI.Button(action: { isShowingAddKeySheet = true }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "plus")
-                                Text("Add")
+                                Text("添加")
                             }
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.blue)
@@ -782,7 +782,7 @@ public struct InfoPlistCustomizationCoreView: View {
 
                     if filtered.isEmpty {
                         Divider().padding(.leading, 16)
-                        Text("No matching keys found")
+                        Text("未找到匹配的键名")
                             .font(.footnote)
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -849,7 +849,7 @@ public struct InfoPlistCustomizationCoreView: View {
                     }
                     .pickerStyle(.segmented)
                 } else {
-                    TextField("Value", text: $rawEntries[targetIdx].value)
+                    TextField("值", text: $rawEntries[targetIdx].value)
                         .font(.system(size: 13, design: .monospaced))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
@@ -867,7 +867,7 @@ public struct InfoPlistCustomizationCoreView: View {
     private var actionBar: some View {
         HStack(spacing: 12) {
             SwiftUI.Button(action: onCancel) {
-                Text("Cancel")
+                Text("取消")
                     .font(.system(size: 16, weight: .medium))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -878,7 +878,7 @@ public struct InfoPlistCustomizationCoreView: View {
             .buttonStyle(.plain)
 
             SwiftUI.Button(action: handleProceed) {
-                Text("Proceed")
+                Text("继续")
                     .font(.system(size: 16, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -896,13 +896,13 @@ public struct InfoPlistCustomizationCoreView: View {
     private var addKeySheet: some View {
         NavigationView {
             Form {
-                Section(header: Text("Key Name")) {
-                    TextField("e.g. CFBundleURLTypes", text: $newKeyName)
+                Section(header: Text("键名 (Key)")) {
+                    TextField("例如 CFBundleURLTypes", text: $newKeyName)
                         .autocapitalization(.none)
                 }
 
-                Section(header: Text("Value Type")) {
-                    Picker("Type", selection: $newKeyType) {
+                Section(header: Text("值类型")) {
+                    Picker("类型", selection: $newKeyType) {
                         ForEach(RawPlistType.allCases) { type in
                             Text(type.rawValue).tag(type)
                         }
@@ -910,27 +910,27 @@ public struct InfoPlistCustomizationCoreView: View {
                     .pickerStyle(.segmented)
                 }
 
-                Section(header: Text("Value")) {
+                Section(header: Text("值")) {
                     if newKeyType == .boolean {
-                        Picker("Boolean Value", selection: $newKeyValue) {
+                        Picker("布尔值", selection: $newKeyValue) {
                             Text("YES").tag("YES")
                             Text("NO").tag("NO")
                         }
                         .pickerStyle(.segmented)
                     } else {
-                        TextField("Value", text: $newKeyValue)
+                        TextField("值", text: $newKeyValue)
                             .autocapitalization(.none)
                     }
                 }
             }
-            .navigationTitle("Add Plist Key")
+            .navigationTitle("新增 Info.plist 键值")
             .navigationBarItems(
-                leading: SwiftUI.Button("Cancel") {
+                leading: SwiftUI.Button("取消") {
                     newKeyName = ""
                     newKeyValue = ""
                     isShowingAddKeySheet = false
                 },
-                trailing: SwiftUI.Button("Add") {
+                trailing: SwiftUI.Button("添加") {
                     let trimmed = newKeyName.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !trimmed.isEmpty else { return }
                     rawEntries.removeAll { $0.key == trimmed }

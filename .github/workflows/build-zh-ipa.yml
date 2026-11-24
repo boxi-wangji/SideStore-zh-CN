@@ -1,0 +1,263 @@
+name: Build SideStore Simplified Chinese IPA (zh-CN)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: '构建完成后同步发布到 GitHub Releases（使用内置 GITHUB_TOKEN，零额外配置）'
+        required: false
+        type: boolean
+        default: false
+      clean_cache:
+        description: '构建前清空 Xcode DerivedData 与 SPM 缓存'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*'
+      - '[0-9]+.[0-9]+.[0-9]*'
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-zh-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-zh-cn:
+    name: Build SideStore-zh-CN.ipa (macOS 15)
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Ensure Submodules & Bundle Symlinks (ZIP-Upload Safe)
+        run: |
+          set -euo pipefail
+
+          echo "=== 1. Syncing & initializing git submodules (if gitlinks exist) ==="
+          git submodule sync --recursive || true
+          git submodule update --init --recursive || true
+
+          echo "=== 2. Verifying Dependencies/minimuxer & Dependencies/SideSign ==="
+          # If repository was initialized from a GitHub ZIP archive without gitlink entries,
+          # automatically clone the exact submodules declared in .gitmodules!
+          if [ ! -f "Dependencies/minimuxer/Package.swift" ]; then
+            echo "Dependencies/minimuxer is empty — cloning from .gitmodules..."
+            MINIMUXER_URL=$(git config -f .gitmodules --get submodule.Dependencies/minimuxer.url || echo "https://github.com/SideStore/minimuxer")
+            MINIMUXER_BRANCH=$(git config -f .gitmodules --get submodule.Dependencies/minimuxer.branch || echo "develop")
+            rm -rf Dependencies/minimuxer
+            git clone --branch "$MINIMUXER_BRANCH" "$MINIMUXER_URL" Dependencies/minimuxer
+            git -C Dependencies/minimuxer submodule update --init --recursive
+          fi
+
+          if [ ! -f "Dependencies/SideSign/Package.swift" ]; then
+            echo "Dependencies/SideSign is empty — cloning from .gitmodules..."
+            SIDESIGN_URL=$(git config -f .gitmodules --get submodule.Dependencies/SideSign.url || echo "https://github.com/SideStore/SideSign")
+            SIDESIGN_BRANCH=$(git config -f .gitmodules --get submodule.Dependencies/SideSign.branch || echo "main")
+            rm -rf Dependencies/SideSign
+            git clone --branch "$SIDESIGN_BRANCH" "$SIDESIGN_URL" Dependencies/SideSign
+            git -C Dependencies/SideSign submodule update --init --recursive
+          fi
+
+          echo "=== 3. Verifying AltStore/Resources/SideBackup.ipa symlink ==="
+          # On Windows ZIP extraction or git add without core.symlinks, SideBackup.ipa may be missing
+          # or turned into a plain text stub. Recreate the exact Unix symlink expected by Xcode & ldid.
+          mkdir -p AltStore/Resources
+          if [ ! -L "AltStore/Resources/SideBackup.ipa" ]; then
+            echo "Recreating Unix symlink AltStore/Resources/SideBackup.ipa -> ../../build/SideBackup.ipa"
+            rm -rf AltStore/Resources/SideBackup.ipa
+            ln -s ../../build/SideBackup.ipa AltStore/Resources/SideBackup.ipa
+          fi
+          ls -la AltStore/Resources/SideBackup.ipa
+
+      - name: Select Latest Installed Stable Xcode on macos-15
+        run: |
+          set -euo pipefail
+          echo "=== Installed Xcode Bundles on Runner ==="
+          ls -d /Applications/Xcode*.app || true
+
+          SELECTED_XCODE=$(python3 - <<'PY'
+          import glob, os, plistlib, re
+
+          candidates = []
+          for app in glob.glob("/Applications/Xcode*.app"):
+              info_path = os.path.join(app, "Contents", "Info.plist")
+              dev_dir = os.path.join(app, "Contents", "Developer")
+              if not (os.path.isfile(info_path) and os.path.isdir(dev_dir)):
+                  continue
+              try:
+                  with open(info_path, "rb") as f:
+                      info = plistlib.load(f)
+                  ver_str = str(info.get("CFBundleShortVersionString", "0"))
+                  nums = tuple(int(x) for x in re.findall(r"\d+", ver_str))
+                  is_beta = 1 if ("beta" in app.lower() or "preview" in app.lower()) else 0
+                  candidates.append(((1 - is_beta), nums, os.path.realpath(app)))
+              except Exception:
+                  continue
+
+          if candidates:
+              candidates.sort(reverse=True)
+              print(candidates[0][2])
+          elif os.path.isdir("/Applications/Xcode.app"):
+              print("/Applications/Xcode.app")
+          PY
+          )
+
+          if [ -n "$SELECTED_XCODE" ] && [ -d "$SELECTED_XCODE/Contents/Developer" ]; then
+            echo "Selecting Xcode: $SELECTED_XCODE"
+            sudo xcode-select -s "$SELECTED_XCODE/Contents/Developer"
+            echo "DEVELOPER_DIR=$SELECTED_XCODE/Contents/Developer" >> "$GITHUB_ENV"
+          fi
+
+          sudo xcodebuild -runFirstLaunch || true
+          xcodebuild -version
+          swift --version
+
+      - name: Install Build Tools (ldid & xcbeautify)
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+        run: |
+          command -v ldid >/dev/null 2>&1 || brew install ldid
+          command -v xcbeautify >/dev/null 2>&1 || brew install xcbeautify
+          ldid -h >/dev/null 2>&1 || true
+          xcbeautify --version
+
+      - name: Setup Version Metadata
+        run: |
+          set -euo pipefail
+          BUILD_NUM="${{ github.run_number }}"
+          BASE_VERSION=$(python3 scripts/ci/workflow.py get-marketing-version)
+          SHORT_COMMIT=$(git rev-parse --short HEAD)
+
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            CLEAN_TAG="${GITHUB_REF_NAME#v}"
+            FINAL_VERSION="${CLEAN_TAG}"
+          else
+            FINAL_VERSION=$(python3 scripts/ci/workflow.py compute-normalized \
+              "$BASE_VERSION" \
+              "$BUILD_NUM" \
+              "$SHORT_COMMIT")
+          fi
+
+          python3 scripts/ci/workflow.py set-marketing-version "$FINAL_VERSION"
+
+          echo "BUILD_NUM=$BUILD_NUM" | tee -a "$GITHUB_ENV"
+          echo "SHORT_COMMIT=$SHORT_COMMIT" | tee -a "$GITHUB_ENV"
+          echo "MARKETING_VERSION=$FINAL_VERSION" | tee -a "$GITHUB_ENV"
+
+      - name: Cache Xcode DerivedData & SwiftPM
+        if: ${{ inputs.clean_cache != true }}
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData
+            ~/Library/Caches/org.swift.swiftpm
+          key: sidestore-zh-macos15-${{ github.ref_name }}-${{ hashFiles('AltStore.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'Dependencies/*/Package.swift') }}
+          restore-keys: |
+            sidestore-zh-macos15-${{ github.ref_name }}-
+            sidestore-zh-macos15-
+
+      - name: Clean Build Cache (Optional)
+        if: ${{ inputs.clean_cache == true }}
+        run: |
+          python3 scripts/ci/workflow.py clean
+          python3 scripts/ci/workflow.py clean-derived-data
+          python3 scripts/ci/workflow.py clean-spm-cache
+
+      - name: Resolve Swift Package Dependencies
+        run: |
+          for attempt in 1 2 3; do
+            if xcodebuild -resolvePackageDependencies -project AltStore.xcodeproj -scheme SideStore; then
+              break
+            fi
+            echo "SPM resolution attempt $attempt failed, retrying in 5s..."
+            sleep 5
+          done
+
+      - name: Archive, Fake-Sign (ldid) & Package SideStore-zh-CN.ipa
+        run: |
+          set -euo pipefail
+          mkdir -p build/logs
+
+          NSUnbufferedIO=YES make -B build 2>&1 \
+            | tee -a build/logs/build.log \
+            | xcbeautify --renderer github-actions
+
+          make fakesign 2>&1 | tee -a build/logs/build.log
+          make ipa 2>&1 | tee -a build/logs/build.log
+
+          cp -f SideStore.ipa SideStore-zh-CN.ipa
+          zip -r -9 ./SideStore.dSYMs.zip ./SideStore.xcarchive/dSYMs
+          (cd build/logs && zip -r ../../build-logs.zip .)
+
+          echo "=== Verifying SideStore-zh-CN.ipa Integrity ==="
+          test -s SideStore-zh-CN.ipa
+          unzip -t SideStore-zh-CN.ipa >/dev/null
+          unzip -l SideStore-zh-CN.ipa | grep -E "Payload/SideStore\.app/(SideStore|Info\.plist|SideBackup\.ipa)"
+          ls -lh SideStore-zh-CN.ipa SideStore.dSYMs.zip build-logs.zip
+
+      - name: Upload SideStore-zh-CN.ipa Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SideStore-zh-CN.ipa
+          path: SideStore-zh-CN.ipa
+          if-no-files-found: error
+
+      - name: Upload dSYMs & Build Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SideStore-zh-CN-diagnostics-${{ env.SHORT_COMMIT }}
+          path: |
+            SideStore.dSYMs.zip
+            build-logs.zip
+          if-no-files-found: ignore
+
+      - name: Publish to GitHub Releases (On Tag or Manual Option)
+        if: ${{ startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == true) }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            REL_TAG="${GITHUB_REF_NAME}"
+            PRERELEASE_FLAG=""
+          else
+            REL_TAG="zh-CN-build-${BUILD_NUM}"
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          cat > release-notes-zh.md <<EOF
+          ## SideStore 简体中文汉化版 (${MARKETING_VERSION})
+
+          - **产物文件**：\`SideStore-zh-CN.ipa\`（已使用 \`ldid\` 注入权限，可直接通过 AltServer / SideStore / LiveContainer / TrollStore 侧载安装）
+          - **构建提交**：\`${GITHUB_SHA}\`
+          - **编译环境**：GitHub Actions \`macos-15\`
+          EOF
+
+          if gh release view "$REL_TAG" >/dev/null 2>&1; then
+            gh release upload "$REL_TAG" SideStore-zh-CN.ipa SideStore.dSYMs.zip --clobber
+          else
+            gh release create "$REL_TAG" \
+              SideStore-zh-CN.ipa \
+              SideStore.dSYMs.zip \
+              --title "SideStore 简体中文版 ${MARKETING_VERSION}" \
+              --notes-file release-notes-zh.md \
+              --target "${GITHUB_SHA}" \
+              $PRERELEASE_FLAG
+          fi

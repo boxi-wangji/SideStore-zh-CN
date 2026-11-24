@@ -95,7 +95,7 @@ struct WirelessPairView: View {
                             Image(systemName: "wifi")
                                 .font(.subheadline)
                                 .foregroundColor(.accentColor)
-                            Text("Ensure both devices are on the same Wi-Fi network.")
+                            Text("请确保两台设备处于同一局域网 Wi-Fi 下。")
                                 .font(.footnote)
                                 .foregroundColor(.secondary)
                         }
@@ -118,10 +118,10 @@ struct WirelessPairView: View {
                 SwiftUI.Button(action: togglePairing) {
                     HStack {
                         if viewModel.isAdvertising {
-                            Text("Stop Pairing Server")
+                            Text("停止配对广播服务")
                                 .transition(.scale.combined(with: .opacity))
                         } else {
-                            Text("Start Pairing Server")
+                            Text("启动配对广播服务")
                                 .transition(.scale.combined(with: .opacity))
                         }
                     }
@@ -137,7 +137,7 @@ struct WirelessPairView: View {
                 .padding(.horizontal, 32)
                 .padding(.bottom, 32)
         }
-        .navigationTitle("Wireless Pairing")
+        .navigationTitle("本机无线配对")
         #if !os(tvOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -150,7 +150,7 @@ struct WirelessPairView: View {
                     Image(systemName: "bolt.horizontal.fill")
                         .font(.system(size: 16, weight: .medium))
                 }
-                .accessibilityLabel("Connect to Target Device")
+                .accessibilityLabel("连接目标设备进行配对")
             }
         }
         .onAppear {
@@ -188,17 +188,17 @@ struct WirelessPairView: View {
                 }
             }
         }
-        .alert("Enter Pairing PIN", isPresented: $viewModel.isPinPromptPresented) {
-            TextField("6-digit PIN", text: $viewModel.enteredPin)
+        .alert("输入配对验证码 (PIN)", isPresented: $viewModel.isPinPromptPresented) {
+            TextField("6 位数字配对码", text: $viewModel.enteredPin)
                 .keyboardType(.numberPad)
-            SwiftUI.Button("Pair") {
+            SwiftUI.Button("开始配对") {
                 viewModel.submitEnteredPin()
             }
-            SwiftUI.Button("Cancel", role: .cancel) {
+            SwiftUI.Button("取消", role: .cancel) {
                 viewModel.cancelPinPrompt()
             }
         } message: {
-            Text("Enter the 6-digit code displayed on your Apple TV / device screen.")
+            Text("请输入 Apple TV 或目标设备屏幕上显示的 6 位数字配对码。")
         }
         .sheet(isPresented: $viewModel.isShareSheetPresented) {
             if let fileURL = viewModel.shareSheetURL {
@@ -228,11 +228,11 @@ struct WirelessPairPinDialog: View {
                     .padding(.top, 24)
                 
                 VStack(spacing: 6) {
-                    Text("Pairing Code")
+                    Text("配对验证码")
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Text("Enter this 6-digit code on the connecting device to complete pairing.")
+                    Text("请在发起连接的另一台设备上输入此 6 位配对码以完成无线配对。")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -290,7 +290,7 @@ struct ConnectionDetailsCard: View {
             HStack{
                 Image(systemName: "network")
                     .foregroundColor(.accentColor)
-                Text("Connection Details")
+                Text("连接详情")
                     .font(.headline)
             }
             .padding(.horizontal, 16)
@@ -343,7 +343,7 @@ struct ConnectionDetailsCard: View {
                             UIPasteboard.general.string = value
                             #endif
                         } label: {
-                            Label("Copy \(label)", systemImage: "doc.on.doc")
+                            Label("复制\(label)", systemImage: "doc.on.doc")
                         }
                     }
                 }

@@ -21,13 +21,13 @@ public enum AppExtensionCustomization: String, CaseIterable, Identifiable, Senda
     public var displayName: String {
         switch self {
         case .promptUser:
-            return "Prompt User"
+            return "每次询问我"
         case .removeAll:
-            return "Remove All"
+            return "移除全部扩展"
         case .keepAll:
-            return "Keep All"
+            return "保留全部扩展（独立 App ID）"
         case .useMainProfile:
-            return "Use Main Profile"
+            return "保留扩展（共用主描述文件）"
         }
     }
 

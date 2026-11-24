@@ -29,11 +29,11 @@ struct SignableCertificateRowView: View {
     
     private var statusText: String? {
         if isAppCert && isActiveGlobal {
-            return "Current App & Active Global"
+            return "当前应用正在使用 & 全局默认"
         } else if isAppCert {
-            return "Current App"
+            return "当前应用正在使用"
         } else if isActiveGlobal {
-            return "Active Global"
+            return "全局默认激活"
         }
         return nil
     }
@@ -48,14 +48,14 @@ struct SignableCertificateRowView: View {
                 let certName = cert.name
                 if cert.machineName != nil {
                     (
-                        Text("Name: ").font(.system(size: 10))
+                        Text("名称：").font(.system(size: 10))
                         + Text(certName).font(.system(size: 10))
                     )
                     .foregroundColor(Color(uiColor: .lightGray))
                 }
                 
                 (
-                    Text("Serial: ").font(.system(size: 11))
+                    Text("序列号：").font(.system(size: 11))
                     + Text(cert.serialNumber).font(.system(size: 11, design: .monospaced))
                 )
                 .foregroundColor(Color(uiColor: .lightGray))
@@ -70,13 +70,13 @@ struct SignableCertificateRowView: View {
                 
                 if let brief = briefInfo {
                     (
-                        Text("Type: ").font(.system(size: 10))
+                        Text("类型：").font(.system(size: 10))
                         + Text(brief.type).font(.system(size: 10))
                     )
                     .foregroundColor(Color(uiColor: .lightGray))
                     
                     (
-                        Text("Validity: ").font(.system(size: 10))
+                        Text("有效期：").font(.system(size: 10))
                         + Text("\(brief.validFrom) - \(brief.validUntil)").font(.system(size: 10))
                     )
                     .foregroundColor(Color(uiColor: .lightGray))
@@ -84,21 +84,21 @@ struct SignableCertificateRowView: View {
                 
                 if let req = cert.requesterEmail, !req.isEmpty {
                     (
-                        Text("Requester: ").font(.system(size: 10))
+                        Text("申请者：").font(.system(size: 10))
                         + Text(req).font(.system(size: 10))
                     )
                     .foregroundColor(Color(uiColor: .lightGray))
                 }
                 
                 (
-                    Text("Keys: ").font(.system(size: 10))
-                    + Text("public + private").font(.system(size: 10))
+                    Text("密钥：").font(.system(size: 10))
+                    + Text("公钥 + 私钥（可签名）").font(.system(size: 10))
                 )
                 .foregroundColor(Color(uiColor: .lightGray))
                 
                 if let status = statusText {
                     (
-                        Text("Status: ").font(.system(size: 10))
+                        Text("状态：").font(.system(size: 10))
                         + Text(status).font(.system(size: 10, weight: .bold))
                     )
                     .foregroundColor(isAppCert ? .green : .cyan)
@@ -141,7 +141,7 @@ final class SignableCertificatesListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.title = NSLocalizedString("Set Certificate", comment: "")
+        self.title = NSLocalizedString("指定应用签名证书", comment: "")
         self.certificates = viewModel.loadAllSignableLocalCertificates()
         
         self.view.backgroundColor = .settingsBackground
@@ -171,11 +171,11 @@ final class SignableCertificatesListViewController: UITableViewController {
         
         guard !signableCerts.isEmpty else {
             let alert = UIAlertController(
-                title: NSLocalizedString("No Signing Certificates", comment: ""),
-                message: NSLocalizedString("No valid signing certificates with private keys were found locally. Please import or create a certificate in Settings -> Certificates first.", comment: ""),
+                title: NSLocalizedString("无可用签名证书", comment: ""),
+                message: NSLocalizedString("本地未找到包含私钥的有效签名证书，请先前往「设置 -> 签名证书管理」创建或导入 .p12 证书。", comment: ""),
                 preferredStyle: .alert
             )
-            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
+            alert.addAction(UIAlertAction(title: NSLocalizedString("好", comment: ""), style: .default))
             presentingViewController.present(alert, animated: true)
             return
         }
@@ -243,18 +243,18 @@ final class SignableCertificatesListViewController: UITableViewController {
         
         let contentVC = SetCertificateAlertViewController(installedApp: self.installedApp, certificate: cert.x509)
         let confirmAlert = UIAlertController(
-            title: NSLocalizedString("Set Certificate Confirmation", comment: ""),
-            message: NSLocalizedString("Confirm applying this certificate:", comment: ""),
+            title: NSLocalizedString("确认更换签名证书", comment: ""),
+            message: NSLocalizedString("确认改用以下证书重新签名此应用：", comment: ""),
             preferredStyle: .alert
         )
         confirmAlert.setValue(contentVC, forKey: "contentViewController")
         
-        let setAction = UIAlertAction(title: NSLocalizedString("Set & Resign", comment: ""), style: .default) { [weak self] _ in
+        let setAction = UIAlertAction(title: NSLocalizedString("应用并立即重签", comment: ""), style: .default) { [weak self] _ in
             self?.dismiss(animated: true) {
                 self?.onSelectCertificate?(cert)
             }
         }
-        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel)
+        let cancelAction = UIAlertAction(title: NSLocalizedString("取消", comment: ""), style: .cancel)
         
         confirmAlert.addAction(cancelAction)
         confirmAlert.addAction(setAction)

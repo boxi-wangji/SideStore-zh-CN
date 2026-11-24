@@ -100,7 +100,7 @@ private extension AppIDsViewController
             cell.bannerView.iconImageView.isHidden = true
             cell.bannerView.button.isIndicatingActivity = false
             
-            cell.bannerView.buttonLabel.text = NSLocalizedString("Expires in", comment: "")
+            cell.bannerView.buttonLabel.text = NSLocalizedString("剩余", comment: "")
             
             let attributedAccessibilityLabel = NSMutableAttributedString(string: appID.name + ". ")
             
@@ -121,7 +121,7 @@ private extension AppIDsViewController
                 formatter.maximumUnitCount = 1
 
                 let timeInterval = formatter.string(from: currentDate, to: expirationDate)
-                let timeIntervalText = timeInterval ?? NSLocalizedString("Unknown", comment: "")
+                let timeIntervalText = timeInterval ?? NSLocalizedString("未知", comment: "")
                 cell.bannerView.button.setTitle(timeIntervalText.uppercased(), for: .normal)
                 
                 attributedAccessibilityLabel.mutableString.append(timeIntervalText)
@@ -221,8 +221,8 @@ private extension AppIDsViewController
     func footerText() -> String {
         let count = self.dataSource.itemCount
         return count == 1
-            ? NSLocalizedString("1 App ID", comment: "")
-            : String(format: NSLocalizedString("%@ App IDs", comment: ""), NSNumber(value: count))
+            ? NSLocalizedString("1 个应用 ID", comment: "")
+            : String(format: NSLocalizedString("%@ 个应用 ID", comment: ""), NSNumber(value: count))
     }
     
     func refreshFooter()

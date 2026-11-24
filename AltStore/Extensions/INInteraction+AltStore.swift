@@ -14,7 +14,7 @@ extension INInteraction
     static func refreshAllApps() -> INInteraction
     {
         let refreshAllIntent = RefreshAllIntent()
-        refreshAllIntent.suggestedInvocationPhrase = NSString.deferredLocalizedIntentsString(with: "Refresh my apps") as String
+        refreshAllIntent.suggestedInvocationPhrase = NSString.deferredLocalizedIntentsString(with: "刷新我的侧载应用") as String
         
         let interaction = INInteraction(intent: refreshAllIntent, response: nil)
         return interaction

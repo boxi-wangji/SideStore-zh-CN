@@ -22,13 +22,13 @@ enum BackupEncryptionError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidPassword:
-            return "Invalid password."
+            return "密码无效。"
         case .decryptionFailed:
-            return "Incorrect password or corrupted backup file."
+            return "解密密码错误，或备份文件已损坏。"
         case .exportPasswordMatchesApplePassword:
-            return "File password cannot be the same as Apple ID password stored in secure keychain."
+            return "为安全起见，备份文件加密密码不能与你的 Apple ID 登录密码相同。"
         case .invalidDataFormat:
-            return "The backup file format is invalid."
+            return "备份文件格式无效。"
         }
     }
 }
@@ -250,7 +250,7 @@ class ImportExport {
         #else
         TVWebFileTransferManager.shared.startImport(
             acceptedExtensions: ["zip", "backup"],
-            title: "Import App Backup",
+            title: "导入应用备份",
             presentingVC: presentingViewController
         ) { selectedURL in
             handleSelectedURL(selectedURL)

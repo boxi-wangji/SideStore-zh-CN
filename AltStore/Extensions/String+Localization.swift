@@ -14,7 +14,25 @@ public extension String {
     }
 }
 
+private let zhSystemStrings: [String: String] = [
+    "OK": "好",
+    "Cancel": "取消",
+    "Done": "完成",
+    "Continue": "继续",
+    "Retry": "重试",
+    "Delete": "删除",
+    "Remove": "移除",
+    "Save": "保存",
+    "Close": "关闭",
+    "Edit": "编辑",
+    "Share": "分享",
+    "Copy": "复制"
+]
+
 public func systemLocalizedString(_ string: String) -> String {
+    if let zh = zhSystemStrings[string] {
+        return zh
+    }
     let bundle = Bundle(for: UIApplication.self)
     let localizedString = bundle.localizedString(forKey: string, value: "com.sidestore.SystemLocalizedStringNotFound", table: nil)
     if localizedString == "com.sidestore.SystemLocalizedStringNotFound" {

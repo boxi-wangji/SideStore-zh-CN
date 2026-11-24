@@ -41,10 +41,10 @@ struct CodeResourcesViewer: View {
     @State private var toastMessage: String = ""
 
     enum FilterMode: String, CaseIterable {
-        case all = "All"
-        case required = "Required"
-        case optional = "Optional"
-        case rules = "Rules"
+        case all = "全部"
+        case required = "必选"
+        case optional = "可选"
+        case rules = "规则"
     }
 
     private var filteredEntries: [CodeResourceEntry] {
@@ -71,16 +71,16 @@ struct CodeResourcesViewer: View {
     var body: some View {
         List {
             if isLoaded && parseError == nil {
-                Section(header: Text("Code Signature Seal")) {
-                    InfoRow(label: "File", value: url.lastPathComponent)
-                    InfoRow(label: "Total Sealed Files", value: "\(entries.count)")
-                    InfoRow(label: "Signing Rules", value: "\(rules.count)")
+                Section(header: Text("代码签名资源封签 (CodeResources)")) {
+                    InfoRow(label: "文件名", value: url.lastPathComponent)
+                    InfoRow(label: "签名封存文件总数", value: "\(entries.count)")
+                    InfoRow(label: "签名匹配规则数", value: "\(rules.count)")
                     let hasV2 = rawPlist?["files2"] != nil
-                    InfoRow(label: "Format Version", value: hasV2 ? "Version 2 (SHA-256)" : "Version 1 (SHA-1)")
+                    InfoRow(label: "封签格式版本", value: hasV2 ? "版本 2 (SHA-256)" : "版本 1 (SHA-1)")
                 }
 
                 Section {
-                    Picker("Display Mode", selection: $filterMode) {
+                    Picker("筛选模式", selection: $filterMode) {
                         ForEach(FilterMode.allCases, id: \.self) { mode in
                             Text(mode.rawValue).tag(mode)
                         }
@@ -89,9 +89,9 @@ struct CodeResourcesViewer: View {
                 }
 
                 if filterMode == .rules {
-                    Section(header: Text("Signing Rules (\(filteredRules.count))")) {
+                    Section(header: Text("签名规则 (\(filteredRules.count))")) {
                         if filteredRules.isEmpty {
-                            Text("No rules matching '\(searchQuery)'")
+                            Text("没有匹配「\(searchQuery)」的规则")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         } else {
@@ -103,7 +103,7 @@ struct CodeResourcesViewer: View {
                                             .foregroundColor(.primary)
                                         Spacer()
                                         if rule.isOmitted {
-                                            Text("Omit")
+                                            Text("忽略")
                                                 .font(.caption)
                                                 .foregroundColor(.red)
                                                 .padding(.horizontal, 6)
@@ -111,7 +111,7 @@ struct CodeResourcesViewer: View {
                                                 .background(Color.red.opacity(0.1))
                                                 .cornerRadius(6)
                                         } else {
-                                            Text("Seal")
+                                            Text("封签")
                                                 .font(.caption)
                                                 .foregroundColor(.green)
                                                 .padding(.horizontal, 6)
@@ -121,7 +121,7 @@ struct CodeResourcesViewer: View {
                                         }
                                     }
                                     if let w = rule.weight {
-                                        Text("Weight: \(String(format: "%.1f", w))")
+                                        Text("权重：\(String(format: "%.1f", w))")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
                                     }
@@ -131,9 +131,9 @@ struct CodeResourcesViewer: View {
                         }
                     }
                 } else {
-                    Section(header: Text("Sealed Files (\(filteredEntries.count))")) {
+                    Section(header: Text("已封存文件 (\(filteredEntries.count))")) {
                         if filteredEntries.isEmpty {
-                            Text(entries.isEmpty ? "No sealed files found" : "No files matching '\(searchQuery)'")
+                            Text(entries.isEmpty ? "未找到签名封存记录" : "没有匹配「\(searchQuery)」的文件")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         } else {
@@ -154,7 +154,7 @@ struct CodeResourcesViewer: View {
                                                     .foregroundColor(.primary)
                                                 Spacer()
                                                 if entry.isOptional {
-                                                    Text("Optional")
+                                                    Text("可选")
                                                         .font(.caption2)
                                                         .foregroundColor(.orange)
                                                         .padding(.horizontal, 5)
@@ -186,12 +186,12 @@ struct CodeResourcesViewer: View {
                 }
 
                 if let plist = rawPlist {
-                    Section(header: Text("Raw Inspection")) {
+                    Section(header: Text("底层结构查看")) {
                         NavigationLink(destination: InfoPlistContainerView(plist: plist, title: "CodeResources")) {
                             HStack {
                                 Image(systemName: "list.bullet.rectangle")
                                     .foregroundColor(.green)
-                                Text("Explore Structure (\(plist.count) keys)")
+                                Text("以树状键值查看（共 \(plist.count) 项）")
                                     .font(.subheadline)
                             }
                         }
@@ -201,7 +201,7 @@ struct CodeResourcesViewer: View {
                                 HStack {
                                     Image(systemName: "doc.plaintext")
                                         .foregroundColor(.blue)
-                                    Text("View Raw XML")
+                                    Text("查看原始 XML 文本")
                                         .font(.subheadline)
                                 }
                             }
@@ -213,7 +213,7 @@ struct CodeResourcesViewer: View {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 44))
                         .foregroundColor(.orange)
-                    Text("Parse Error")
+                    Text("解析失败")
                         .font(.headline)
                     Text(err)
                         .font(.subheadline)
@@ -223,7 +223,7 @@ struct CodeResourcesViewer: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ProgressView("Reading CodeResources...")
+                ProgressView("正在读取 CodeResources…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
@@ -234,7 +234,7 @@ struct CodeResourcesViewer: View {
         .listStyle(GroupedListStyle())
         #endif
         .navigationTitle(url.lastPathComponent)
-        .searchable(text: $searchQuery, prompt: "Search sealed files or rules")
+        .searchable(text: $searchQuery, prompt: "搜索封签文件路径或规则")
         .overlay(
             AppInfoToastView(isShowing: $isShowingToast, message: toastMessage)
         )
@@ -246,7 +246,7 @@ struct CodeResourcesViewer: View {
 
     private func loadCodeResources() {
         guard let data = try? Data(contentsOf: url) else {
-            self.parseError = "Unable to read file contents at \(url.path)."
+            self.parseError = "无法读取位于 \(url.path) 的文件内容。"
             self.isLoaded = true
             return
         }
@@ -256,7 +256,7 @@ struct CodeResourcesViewer: View {
         }
 
         guard let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: any Sendable] else {
-            self.parseError = "Could not decode file as a property list."
+            self.parseError = "无法将该文件解析为 Plist 属性列表。"
             self.isLoaded = true
             return
         }
@@ -336,7 +336,7 @@ struct CodeResourcesViewer: View {
         #if !os(tvOS)
         UIPasteboard.general.string = textToCopy
         #endif
-        self.toastMessage = "Copied \(entry.path.components(separatedBy: "/").last ?? entry.path) to clipboard"
+        self.toastMessage = "已复制 \(entry.path.components(separatedBy: "/").last ?? entry.path) 到剪贴板"
         withAnimation {
             self.isShowingToast = true
         }

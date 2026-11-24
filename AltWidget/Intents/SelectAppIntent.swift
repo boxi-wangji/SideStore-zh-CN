@@ -52,9 +52,9 @@ struct InstalledAppQuery: EntityQuery
 struct SelectAppIntent: WidgetConfigurationIntent
 {
     static var title: LocalizedStringResource = "Select App"
-    static var description = IntentDescription("Choose which app to display.")
+    static var description = IntentDescription("选择要在小组件中展示剩余天数的应用。")
 
-    @Parameter(title: "App")
+    @Parameter(title: "应用")
     var app: InstalledAppEntity?
 
     // WidgetConfigurationIntent requires perform() — no-op for configuration intents.

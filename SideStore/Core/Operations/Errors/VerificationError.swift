@@ -105,7 +105,7 @@ struct VerificationError: ALTLocalizedError
                 failureReason = firstLetter + failureReason.dropFirst()
             }
             
-            let localizedDescription = String(format: NSLocalizedString("This device is running iOS %@, but %@", comment: ""), deviceOSVersion.stringValue, failureReason)
+            let localizedDescription = String(format: NSLocalizedString("当前设备运行的是 iOS %@，但%@", comment: ""), deviceOSVersion.stringValue, failureReason)
             return localizedDescription
             
         default: break
@@ -118,63 +118,63 @@ struct VerificationError: ALTLocalizedError
         switch self.code
         {
 //        case .privateEntitlements:
-//            let appName = self.$app.name ?? NSLocalizedString("The app", comment: "")
+//            let appName = self.$app.name ?? NSLocalizedString("该应用", comment: "")
 //            return String(formatted: "“%@” requires private permissions.", appName)
 
         case .mismatchedBundleIdentifiers:
             if let appBundleID = self.$app.bundleIdentifier, let bundleID = self.sourceBundleID
             {
-                return String(format: NSLocalizedString("The bundle ID “%@” does not match the one specified by the source (“%@”).", comment: ""), appBundleID, bundleID)
+                return String(format: NSLocalizedString("安装包内的实际包名「%@」与软件源声明的包名「%@」不一致。", comment: ""), appBundleID, bundleID)
             }
             else
             {
-                return NSLocalizedString("The bundle ID does not match the one specified by the source.", comment: "")
+                return NSLocalizedString("安装包内的实际包名与软件源声明的包名不一致。", comment: "")
             }
             
         case .iOSVersionNotSupported:
-            let appName = self.$app.name ?? NSLocalizedString("The app", comment: "")
+            let appName = self.$app.name ?? NSLocalizedString("该应用", comment: "")
             let deviceOSVersion = self.deviceOSVersion ?? ProcessInfo.processInfo.operatingSystemVersion
             
             guard let requiredOSVersion else {
-                return String(format: NSLocalizedString("%@ does not support iOS %@.", comment: ""), appName, deviceOSVersion.stringValue)
+                return String(format: NSLocalizedString("%@ 不支持 iOS %@。", comment: ""), appName, deviceOSVersion.stringValue)
             }
             
             if deviceOSVersion > requiredOSVersion
             {
                 // Device OS version is higher than maximum supported OS version.
                 
-                let failureReason = String(format: NSLocalizedString("%@ requires iOS %@ or earlier.", comment: ""), appName, requiredOSVersion.stringValue)
+                let failureReason = String(format: NSLocalizedString("%@ 仅支持 iOS %@ 或更早系统。", comment: ""), appName, requiredOSVersion.stringValue)
                 return failureReason
             }
             else
             {
                 // Device OS version is lower than minimum supported OS version.
                 
-                let failureReason = String(format: NSLocalizedString("%@ requires iOS %@ or later.", comment: ""), appName, requiredOSVersion.stringValue)
+                let failureReason = String(format: NSLocalizedString("%@ 需要 iOS %@ 或更高版本系统。", comment: ""), appName, requiredOSVersion.stringValue)
                 return failureReason
             }
             
         case .mismatchedHash:
-            let appName = self.$app.name ?? NSLocalizedString("the downloaded app", comment: "")
-            return String(format: NSLocalizedString("The SHA-256 hash of %@ does not match the hash specified by the source.", comment: ""), appName)
+            let appName = self.$app.name ?? NSLocalizedString("所下载的安装包", comment: "")
+            return String(format: NSLocalizedString("%@ 的 SHA-256 校验值与软件源声明的哈希值不一致（可在「高级自定义」中调整校验开关）。", comment: ""), appName)
             
         case .mismatchedVersion:
-            let appName = self.$app.name ?? NSLocalizedString("the app", comment: "")
-            return String(format: NSLocalizedString("The downloaded version of %@ does not match the version specified by the source.\nExpected version: %@\nFound version: %@", comment: ""), appName, expectedVersion ?? "nil", version ?? "nil")
+            let appName = self.$app.name ?? NSLocalizedString("该应用", comment: "")
+            return String(format: NSLocalizedString("%@ 下载包的实际版本号与软件源声明不一致。\n预期版本：%@\n实际版本：%@", comment: ""), appName, expectedVersion ?? "nil", version ?? "nil")
             
         case .mismatchedBuildVersion:
-            let appName = self.$app.name ?? NSLocalizedString("the app", comment: "")
-            return String(format: NSLocalizedString("The downloaded version of %@ does not match the build number specified by the source.\nExpected version: %@\nFound version: %@", comment: ""), appName, expectedVersion ?? "nil", version ?? "nil")
+            let appName = self.$app.name ?? NSLocalizedString("该应用", comment: "")
+            return String(format: NSLocalizedString("%@ 下载包的编译号 (Build) 与软件源声明不一致。\n预期编译号：%@\n实际编译号：%@", comment: ""), appName, expectedVersion ?? "nil", version ?? "nil")
             
         case .mismatchedSize:
-            let appName = self.$app.name ?? NSLocalizedString("the downloaded app", comment: "")
+            let appName = self.$app.name ?? NSLocalizedString("所下载的安装包", comment: "")
             let sizeString = ByteCountFormatter.string(fromByteCount: self.size ?? 0, countStyle: .file)
             let expectedSizeString = ByteCountFormatter.string(fromByteCount: self.expectedSize ?? 0, countStyle: .file)
-            return String(format: NSLocalizedString("The file size of %@ (%@) does not match the size specified by the source (%@).", comment: ""), appName, sizeString, expectedSizeString)
+            return String(format: NSLocalizedString("%@ 的实际文件大小 (%@) 与软件源标注大小 (%@) 不一致。", comment: ""), appName, sizeString, expectedSizeString)
             
         case .undeclaredPermissions:
-            let appName = self.$app.name ?? NSLocalizedString("The app", comment: "")
-            return String(format: NSLocalizedString("%@ requires additional permissions not specified by the source.", comment: ""), appName)
+            let appName = self.$app.name ?? NSLocalizedString("该应用", comment: "")
+            return String(format: NSLocalizedString("%@ 请求了软件源未提前声明的附加系统权限。", comment: ""), appName)
             
         case .addedPermissions:
             let appName: String
@@ -189,11 +189,11 @@ struct VerificationError: ALTLocalizedError
             }
             else
             {
-                appName = self.$app.name ?? NSLocalizedString("The app", comment: "")
+                appName = self.$app.name ?? NSLocalizedString("该应用", comment: "")
                 installedVersion = nil
             }
             
-            let baseMessage = String(format: NSLocalizedString("%@ requires more permissions than the version that is already installed", comment: ""), appName)
+            let baseMessage = String(format: NSLocalizedString("%@ 比当前已安装版本请求了更多系统权限", comment: ""), appName)
             
             let failureReason = [baseMessage, installedVersion].compactMap { $0 }.joined(separator: " ") + "."
             return failureReason
@@ -206,7 +206,7 @@ struct VerificationError: ALTLocalizedError
         case .undeclaredPermissions:
             guard let permissionsDescription else { return nil }
             
-            let baseMessage = NSLocalizedString("These permissions must be declared by the source in order for SideStore to install this app:", comment: "")
+            let baseMessage = NSLocalizedString("软件源必须声明以下权限才能由 SideStore 安全安装（或可在「高级自定义」关闭权限审查）：", comment: "")
             let recoverySuggestion = [baseMessage, permissionsDescription].joined(separator: "\n\n")
             return recoverySuggestion
             

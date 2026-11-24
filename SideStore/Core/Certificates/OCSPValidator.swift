@@ -20,15 +20,15 @@ public enum OCSPValidationError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .expired:
-            return "The certificate has expired."
+            return "该签名证书已过期。"
         case .revoked:
-            return "The certificate was revoked by Apple."
+            return "该签名证书已被 Apple 官方吊销。"
         case .invalidCertificate:
-            return "Failed to parse the certificate data."
+            return "无法解析证书数据格式。"
         case .missingIntermediateCertificate:
-            return "Failed to fetch Apple WWDR intermediate certificate."
+            return "无法获取 Apple WWDR 中级根证书。"
         case .ocspServerError(let message):
-            return "OCSP server error: \(message)"
+            return "OCSP 证书状态查询异常：\(message)"
         }
     }
 }

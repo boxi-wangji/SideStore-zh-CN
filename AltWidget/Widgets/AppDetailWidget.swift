@@ -32,8 +32,8 @@ struct AppDetailWidget: Widget
                 AppDetailWidgetView(apps: entry.apps, date: entry.date, isPlaceholder: entry.isPlaceholder)
             }
             .supportedFamilies([.systemSmall])
-            .configurationDisplayName("App Status")
-            .description("View remaining days until your sideloaded apps expire. Tap the countdown timer to refresh them in the background.")
+            .configurationDisplayName("单个应用签名状态")
+            .description("查看指定侧载应用的签名剩余天数，轻点倒计时即可在后台刷新。")
             .contentMarginsDisabled()
         }
         else
@@ -47,8 +47,8 @@ struct AppDetailWidget: Widget
                 AppDetailWidgetView(apps: entry.apps, date: entry.date, isPlaceholder: entry.isPlaceholder)
             }
             .supportedFamilies([.systemSmall])
-            .configurationDisplayName("App Status")
-            .description("View remaining days until your sideloaded apps expire. Tap the countdown timer to refresh them in the background.")
+            .configurationDisplayName("单个应用签名状态")
+            .description("查看指定侧载应用的签名剩余天数，轻点倒计时即可在后台刷新。")
         }
     }
 }
@@ -88,14 +88,14 @@ private struct AppDetailWidgetView: View
                                 let expirationText: Text = {
                                     switch daysRemaining
                                     {
-                                    case ..<0: return Text("Expired")
-                                    case 1: return Text("1 day")
-                                    default: return Text("\(daysRemaining) days")
+                                    case ..<0: return Text("已过期")
+                                    case 1: return Text("1 天")
+                                    default: return Text("\(daysRemaining) 天")
                                     }
                                 }()
                                 
                                 (
-                                    Text("Expires in\n")
+                                    Text("到期剩余\n")
                                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                                         .foregroundColor(Color.white.opacity(0.45)) +
                                     
@@ -133,11 +133,11 @@ private struct AppDetailWidgetView: View
             else
             {
                 VStack(spacing: 4) {
-                    Text("Open SideStore")
+                    Text("进入 SideStore")
                         .font(.system(.subheadline, design: .rounded))
                         .fontWeight(.semibold)
                         .foregroundColor(Color.white.opacity(0.8))
-                    Text("Launch app to update widget")
+                    Text("首次启动 SideStore 后即可同步显示数据")
                         .font(.system(.caption2, design: .rounded))
                         .foregroundColor(Color.white.opacity(0.5))
                         .multilineTextAlignment(.center)

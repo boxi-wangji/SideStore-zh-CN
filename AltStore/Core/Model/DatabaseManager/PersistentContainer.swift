@@ -16,11 +16,11 @@ public enum DatabaseError: LocalizedError, CustomNSError, Sendable, Equatable {
     public var errorDescription: String? {
         switch self {
         case .databaseDowngradeDetected:
-            return NSLocalizedString("Database Downgrade Detected", comment: "")
+            return NSLocalizedString("检测到数据库版本降级", comment: "")
         case .migrationFailed:
-            return NSLocalizedString("Database Migration Failed", comment: "")
+            return NSLocalizedString("数据库迁移失败", comment: "")
         case .missingAppGroup:
-            return NSLocalizedString("App Group Container Inaccessible", comment: "")
+            return NSLocalizedString("无法访问共享应用组容器", comment: "")
         }
     }
     
@@ -113,7 +113,7 @@ open class PersistentContainer: NSPersistentContainer, @unchecked Sendable {
         #if !os(tvOS)
         guard FileManager.default.altstoreSharedDirectory != nil else {
             throw DatabaseError.missingAppGroup(
-                reason: NSLocalizedString("Unable to access the shared App Group container. Refusing to create or use a private sandbox fallback database.", comment: "")
+                reason: NSLocalizedString("无法访问 SideStore 共享应用组 (App Group) 容器。请确认安装 SideStore 时保留了正确的 App Group 签名权限。", comment: "")
             )
         }
         #endif
@@ -149,14 +149,14 @@ open class PersistentContainer: NSPersistentContainer, @unchecked Sendable {
     private func validateMigrationCompatibility(metadata: [String: Any], configuration: String?) throws {
         guard let sourceModel = NSManagedObjectModel.mergedModel(from: Bundle.allBundles, forStoreMetadata: metadata) else {
             throw DatabaseError.databaseDowngradeDetected(
-                reason: NSLocalizedString("The database on disk was created with a newer version of SideStore. Downgrading the database schema is not supported. Please update SideStore or reset your database.", comment: "")
+                reason: NSLocalizedString("当前磁盘数据库由更高版本的 SideStore 创建，不支持跨版本降级读取。请更新 SideStore 到最新版，或选择重置数据库。", comment: "")
             )
         }
         
         var mappingModel: NSMappingModel?
         guard self.progressiveMigrationManager(forSourceModel: sourceModel, destinationModel: self.managedObjectModel, configuration: configuration, mappingModel: &mappingModel) != nil, mappingModel != nil else {
             throw DatabaseError.databaseDowngradeDetected(
-                reason: NSLocalizedString("No valid migration path exists to downgrade this database. Please update SideStore or reset your database.", comment: "")
+                reason: NSLocalizedString("无法降级旧版本数据库结构，请更新 SideStore 或重置数据库。", comment: "")
             )
         }
     }
@@ -221,14 +221,14 @@ open class PersistentContainer: NSPersistentContainer, @unchecked Sendable {
         
         guard let sourceModel = NSManagedObjectModel.mergedModel(from: Bundle.allBundles, forStoreMetadata: sourceMetadata) else {
             throw DatabaseError.databaseDowngradeDetected(
-                reason: NSLocalizedString("The database on disk was created with a newer version of SideStore. Downgrading the database schema is not supported. Please update SideStore or reset your database.", comment: "")
+                reason: NSLocalizedString("当前磁盘数据库由更高版本的 SideStore 创建，不支持跨版本降级读取。请更新 SideStore 到最新版，或选择重置数据库。", comment: "")
             )
         }
         
         var mappingModel: NSMappingModel?
         guard let migrationManager = self.progressiveMigrationManager(forSourceModel: sourceModel, destinationModel: model, configuration: configuration, mappingModel: &mappingModel), let finalMappingModel = mappingModel else {
             throw DatabaseError.migrationFailed(
-                reason: NSLocalizedString("Unable to find a valid migration path for the database.", comment: "")
+                reason: NSLocalizedString("未找到可用的数据库升级迁移路径。", comment: "")
             )
         }
         

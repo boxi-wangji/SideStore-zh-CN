@@ -82,14 +82,14 @@ struct UserCustomizationsView: View {
             VStack(alignment: .leading, spacing: 24) {
                 // Section 0: APPEARANCE & THEMES
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("APPEARANCE & THEMES")
+                    Text("外观与主题")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Color.white.opacity(0.6))
                         .padding(.horizontal, 16)
                     
                     NavigationLink(destination: ThemePickerView()) {
                         HStack {
-                            Text("Theme Manager")
+                            Text("主题配色管理")
                                 .font(.system(size: 17, weight: .bold))
                                 .foregroundColor(.white)
                             Spacer()
@@ -111,15 +111,15 @@ struct UserCustomizationsView: View {
 
                 // Section 1: ANISETTE
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("ANISETTE")
+                    Text("ANISETTE 认证方式")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Color.white.opacity(0.6))
                         .padding(.horizontal, 16)
                     
                     VStack(spacing: 0) {
                         toggleRow(
-                            title: "On-Device Anisette",
-                            subtitle: "Run ADI emulation directly on device instead of remote servers",
+                            title: "本机 Anisette 认证",
+                            subtitle: "直接在设备本地运行 ADI 认证模拟，无需依赖外部服务器",
                             isOn: Binding(
                                 get: { useOnDeviceAnisette },
                                 set: { newValue in
@@ -133,7 +133,7 @@ struct UserCustomizationsView: View {
                         
                         NavigationLink(destination: AnisetteDataView()) {
                             HStack {
-                                Text("Anisette Client Configuration")
+                                Text("Anisette 客户端请求头配置")
                                     .font(.system(size: 17, weight: .bold))
                                     .foregroundColor(.white)
                                 Spacer()
@@ -152,10 +152,10 @@ struct UserCustomizationsView: View {
                         } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Reset adi.pb")
+                                    Text("重置认证缓存 (adi.pb)")
                                         .font(.system(size: 17, weight: .bold))
                                         .foregroundColor(.red)
-                                    Text("Clear local Anisette provisioning data from Keychain")
+                                    Text("清除钥匙串中的本地 Anisette 预置缓存数据")
                                         .font(.system(size: 12, weight: .regular))
                                         .foregroundColor(Color.white.opacity(0.6))
                                 }
@@ -175,7 +175,7 @@ struct UserCustomizationsView: View {
 
                 // Section: SIDESIGN
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("SIDESIGN")
+                    Text("SIDESIGN 签名引擎")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Color.white.opacity(0.6))
                         .padding(.horizontal, 16)
@@ -183,7 +183,7 @@ struct UserCustomizationsView: View {
                     VStack(spacing: 0) {
                         NavigationLink(destination: SideSignConfigurationView()) {
                             HStack {
-                                Text("SideSign Client Configuration")
+                                Text("SideSign 签名客户端配置")
                                     .font(.system(size: 17, weight: .bold))
                                     .foregroundColor(.white)
                                 Spacer()
@@ -204,13 +204,13 @@ struct UserCustomizationsView: View {
 
                 // Section 2: APP VERIFICATION
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("APP VERIFICATION")
+                    Text("安装包安全校验开关")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Color.white.opacity(0.6))
                         .padding(.horizontal, 16)
                     
                     VStack(spacing: 0) {
-                        toggleRow(title: "Disable All Verifications", isOn: Binding(
+                        toggleRow(title: "关闭全部安装包校验", isOn: Binding(
                             get: { appVerificationDisabled },
                             set: { newValue in
                                 appVerificationDisabled = newValue
@@ -221,7 +221,7 @@ struct UserCustomizationsView: View {
                         divider
                         
                         Group {
-                            toggleRow(title: "Bundle Identifier Check", isOn: Binding(
+                            toggleRow(title: "Bundle ID 包名一致性校验", isOn: Binding(
                                 get: { isBundleIDVerificationEnabled },
                                 set: { newValue in
                                     isBundleIDVerificationEnabled = newValue
@@ -231,7 +231,7 @@ struct UserCustomizationsView: View {
                             
                             divider
                             
-                            toggleRow(title: "iOS Version Check", isOn: Binding(
+                            toggleRow(title: "最低 iOS 系统版本校验", isOn: Binding(
                                 get: { isiOSVersionVerificationEnabled },
                                 set: { newValue in
                                     isiOSVersionVerificationEnabled = newValue
@@ -241,7 +241,7 @@ struct UserCustomizationsView: View {
                             
                             divider
                             
-                            toggleRow(title: "App Version Check", isOn: Binding(
+                            toggleRow(title: "应用版本号匹配校验", isOn: Binding(
                                 get: { isAppVersionVerificationEnabled },
                                 set: { newValue in
                                     isAppVersionVerificationEnabled = newValue
@@ -251,7 +251,7 @@ struct UserCustomizationsView: View {
                             
                             divider
                             
-                            toggleRow(title: "Checksum (SHA-256) Check", isOn: Binding(
+                            toggleRow(title: "SHA-256 哈希完整性校验", isOn: Binding(
                                 get: { isChecksumVerificationEnabled },
                                 set: { newValue in
                                     isChecksumVerificationEnabled = newValue
@@ -261,7 +261,7 @@ struct UserCustomizationsView: View {
                             
                             divider
                             
-                            toggleRow(title: "App File Size Check", isOn: Binding(
+                            toggleRow(title: "安装包大小匹配校验", isOn: Binding(
                                 get: { isFileSizeVerificationEnabled },
                                 set: { newValue in
                                     isFileSizeVerificationEnabled = newValue
@@ -271,7 +271,7 @@ struct UserCustomizationsView: View {
                             
                             divider
                             
-                            toggleRow(title: "Permission Checks", isOn: Binding(
+                            toggleRow(title: "新增敏感权限审查提示", isOn: Binding(
                                 get: { !permissionCheckingDisabled },
                                 set: { newValue in
                                     permissionCheckingDisabled = !newValue
@@ -288,7 +288,7 @@ struct UserCustomizationsView: View {
 
                 // Section 3: EMPROXY & WIREGUARD
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("EMPROXY & WIREGUARD")
+                    Text("EMPROXY 与 WIREGUARD 隧道")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Color.white.opacity(0.6))
                         .padding(.horizontal, 16)
@@ -296,12 +296,12 @@ struct UserCustomizationsView: View {
                     VStack(spacing: 0) {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Export WireGuard Config")
+                                Text("导出 WireGuard 配置文件")
                                     .font(.system(size: 17, weight: .bold))
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.leading)
                                     .fixedSize(horizontal: false, vertical: true)
-                                Text("Exports SideStore.conf to import into WireGuard VPN app")
+                                Text("导出 SideStore.conf 以便导入 WireGuard 客户端使用")
                                     .font(.system(size: 12, weight: .regular))
                                     .foregroundColor(Color.white.opacity(0.6))
                                     .multilineTextAlignment(.leading)
@@ -322,8 +322,8 @@ struct UserCustomizationsView: View {
                         divider
                         
                         toggleRow(
-                            title: "EMProxy (WireGuard) Server",
-                            subtitle: "Restart required to apply changes",
+                            title: "内置 EMProxy (WireGuard) 服务",
+                            subtitle: "修改后需重启 SideStore 生效",
                             isOn: Binding(
                                 get: { enableEMPforWireguard },
                                 set: { newValue in
@@ -342,7 +342,7 @@ struct UserCustomizationsView: View {
 
                 // Section 5: MINIMUXER BACKEND
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("MINIMUXER BACKEND")
+                    Text("MINIMUXER 通信后端")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Color.white.opacity(0.6))
                         .padding(.horizontal, 16)
@@ -384,13 +384,13 @@ struct UserCustomizationsView: View {
 
                 // Section 6: BACKGROUND SERVICE
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("BACKGROUND SERVICE")
+                    Text("后台保活服务")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Color.white.opacity(0.6))
                         .padding(.horizontal, 16)
                     
                     VStack(spacing: 0) {
-                        toggleRow(title: "Enable Background Keepalive", isOn: Binding(
+                        toggleRow(title: "开启后台常驻保活", isOn: Binding(
                             get: { isBackgroundServiceEnabled },
                             set: { newValue in
                                 isBackgroundServiceEnabled = newValue
@@ -440,59 +440,59 @@ struct UserCustomizationsView: View {
             .padding(.bottom, 32)
         }
         .background(Color(uiColor: .settingsBackground).ignoresSafeArea())
-        .navigationTitle("User Customizations")
+        .navigationTitle("高级自定义")
         #if !os(tvOS)
         .navigationBarTitleDisplayMode(.large)
         #endif
-        .alert("Restart Required", isPresented: $showAnisetteRestartConfirmation) {
-            SwiftUI.Button("Restart Now", role: .destructive) {
+        .alert("需要重启应用", isPresented: $showAnisetteRestartConfirmation) {
+            SwiftUI.Button("立即退出并重启", role: .destructive) {
                 Task {
                     await AuthManager.shared.signOut(keepCertificate: true, keepAnisetteData: false)
                     UserDefaults.standard.useOnDeviceAnisette = useOnDeviceAnisette
                     exit(0)
                 }
             }
-            SwiftUI.Button("Cancel", role: .cancel) {
+            SwiftUI.Button("取消", role: .cancel) {
                 useOnDeviceAnisette = UserDefaults.standard.useOnDeviceAnisette
             }
         } message: {
-            Text("Changing Anisette config will invalidate your current provisioned Anisette data and you will be signed out.\n\nThis action will require a restart, do you want to proceed?")
+            Text("切换 Anisette 认证模式会使当前本地认证数据失效并退出 Apple ID 登录。\n\n此操作需要立即关闭重启 SideStore，确定继续吗？")
         }
-        .alert("Restart Required", isPresented: $showEMPRestartConfirmation) {
-            SwiftUI.Button("Restart Now", role: .destructive) {
+        .alert("需要重启应用", isPresented: $showEMPRestartConfirmation) {
+            SwiftUI.Button("立即退出并重启", role: .destructive) {
                 enableEMPforWireguard = pendingEMPOption
                 UserDefaults.standard.enableEMPforWireguard = pendingEMPOption
                 exit(0)
             }
-            SwiftUI.Button("Cancel", role: .cancel) {}
+            SwiftUI.Button("取消", role: .cancel) {}
         } message: {
-            Text("Changing the EMProxy setting requires restarting SideStore. If canceled, changes will not be saved.")
+            Text("更改 EMProxy 服务开关需要重启 SideStore 才能生效，取消则不会保存更改。")
         }
-        .alert("Restart Required", isPresented: $showBackendRestartConfirmation) {
-            SwiftUI.Button("Restart Now", role: .destructive) {
+        .alert("需要重启应用", isPresented: $showBackendRestartConfirmation) {
+            SwiftUI.Button("立即退出并重启", role: .destructive) {
                 if let newBackend = pendingBackendOption {
                     applyBackendChange(newBackend, restartRequired: true)
                 }
             }
-            SwiftUI.Button("Cancel", role: .cancel) {
+            SwiftUI.Button("取消", role: .cancel) {
                 pendingBackendOption = nil
             }
         } message: {
-            Text("Changing the Minimuxer backend requires restarting SideStore. If canceled, changes will not be saved.")
+            Text("切换 Minimuxer 底层后端需要重启 SideStore 才能生效，取消则不会保存更改。")
         }
-        .alert(pendingPreferIPAOngoing ? "Prefer Resigned IPA" : "Prefer App Bundle", isPresented: $showPreferIPAToggleAlert) {
-            SwiftUI.Button("Switch") {
+        .alert(pendingPreferIPAOngoing ? "优先打包 IPA 传输" : "优先直接传输 .app 目录", isPresented: $showPreferIPAToggleAlert) {
+            SwiftUI.Button("切换") {
                 preferResignedIPA = pendingPreferIPAOngoing
                 UserDefaults.standard.preferResignedIPA = pendingPreferIPAOngoing
             }
-            SwiftUI.Button("Cancel", role: .cancel) {
+            SwiftUI.Button("取消", role: .cancel) {
                 pendingPreferIPAOngoing = preferResignedIPA
             }
         } message: {
             if pendingPreferIPAOngoing {
-                Text("Switching to Resigned IPA prioritizes install speed (~40% faster) by packaging an uncompressed IPA for fast transfer, but temporarily uses additional disk space during packaging.")
+                Text("切换为「优先打包 IPA」可通过无压缩流式传输将安装速度提升约 40%，但安装期间会临时多占用双倍缓存空间。")
             } else {
-                Text("Switching to App Bundle prioritizes storage efficiency by transferring the app bundle directly without packaging a temporary IPA, but transfer speeds will be noticeably slower.")
+                Text("切换为「直接传输 .app 目录」无需生成临时 IPA，更节省剩余存储空间，但侧载传输速度会相对较慢。")
             }
         }
         .sheet(isPresented: Binding<Bool>(
@@ -514,13 +514,13 @@ struct UserCustomizationsView: View {
                 #if !os(tvOS)
                 .keyboardType(editDialog?.keyboardType ?? .default)
                 #endif
-            SwiftUI.Button("OK") {
+            SwiftUI.Button("好") {
                 if let dialog = editDialog {
                     dialog.onSave(editingValueText)
                 }
                 editDialog = nil
             }
-            SwiftUI.Button("Cancel", role: .cancel) {
+            SwiftUI.Button("取消", role: .cancel) {
                 editDialog = nil
             }
         } message: {
@@ -597,15 +597,15 @@ struct UserCustomizationsView: View {
     @ViewBuilder
     private var cellularRefreshShortcutsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("CELLULAR REFRESH")
+            Text("蜂窝网络自动刷新辅助")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Color.white.opacity(0.6))
                 .padding(.horizontal, 16)
 
             VStack(spacing: 0) {
                 toggleRow(
-                    title: "Cellular Refresh",
-                    subtitle: "Automatically toggle cellular data via Shortcuts during refresh",
+                    title: "蜂窝网络下借助快捷指令刷新",
+                    subtitle: "刷新期间通过系统「快捷指令」自动短暂开关蜂窝数据以放行本地隧道",
                     isOn: Binding(
                         get: { isCellularRefreshEnabled },
                         set: { newValue in
@@ -618,8 +618,8 @@ struct UserCustomizationsView: View {
                 divider
 
                 textFieldRow(
-                    title: "Turn On Cellular Shortcut",
-                    subtitle: "Name of the shortcut in Apple Shortcuts app",
+                    title: "开启蜂窝数据的快捷指令名称",
+                    subtitle: "需与系统「快捷指令」App 中的指令名称完全一致",
                     placeholder: AppConstants.Shortcuts.defaultTurnOnDataShortcutName,
                     value: turnOnDataShortcutName,
                     onTap: openTurnOnShortcutDialog
@@ -628,8 +628,8 @@ struct UserCustomizationsView: View {
                 divider
 
                 textFieldRow(
-                    title: "Turn Off Cellular Shortcut",
-                    subtitle: "Name of the shortcut in Apple Shortcuts app",
+                    title: "关闭蜂窝数据的快捷指令名称",
+                    subtitle: "需与系统「快捷指令」App 中的指令名称完全一致",
                     placeholder: AppConstants.Shortcuts.defaultTurnOffDataShortcutName,
                     value: turnOffDataShortcutName,
                     onTap: openTurnOffShortcutDialog
@@ -638,8 +638,8 @@ struct UserCustomizationsView: View {
                 divider
 
                 textFieldRow(
-                    title: "Turn On Base Delay",
-                    subtitle: "Base wait time after turning on data (seconds, ≥ 0)",
+                    title: "开启蜂窝后等待延迟",
+                    subtitle: "恢复蜂窝数据后的基础等待秒数（≥ 0 秒）",
                     placeholder: String(AppConstants.Shortcuts.defaultTurnOnDataBaseDelay),
                     value: turnOnBaseDelayText,
                     unit: "s",
@@ -649,8 +649,8 @@ struct UserCustomizationsView: View {
                 divider
 
                 textFieldRow(
-                    title: "Turn Off Base Delay",
-                    subtitle: "Base wait time after turning off data (seconds, ≥ 0)",
+                    title: "关闭蜂窝后等待延迟",
+                    subtitle: "关闭蜂窝数据后的基础等待秒数（≥ 0 秒）",
                     placeholder: String(AppConstants.Shortcuts.defaultTurnOffDataBaseDelay),
                     value: turnOffBaseDelayText,
                     unit: "s",
@@ -662,7 +662,7 @@ struct UserCustomizationsView: View {
                 SwiftUI.Button(action: resetCellularDefaults) {
                     HStack {
                         Spacer()
-                        Text("Reset to Defaults")
+                        Text("恢复默认设置")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.red)
                         Spacer()
@@ -678,8 +678,8 @@ struct UserCustomizationsView: View {
     private func openTurnOnShortcutDialog() {
         editingValueText = turnOnDataShortcutName
         editDialog = EditDialogState(
-            title: "Turn On Cellular Shortcut",
-            message: "Name of the shortcut in Apple Shortcuts app",
+            title: "开启蜂窝数据的快捷指令名称",
+            message: "需与系统「快捷指令」App 中的指令名称完全一致",
             placeholder: AppConstants.Shortcuts.defaultTurnOnDataShortcutName,
             keyboardType: .default,
             onSave: { newValue in
@@ -695,8 +695,8 @@ struct UserCustomizationsView: View {
     private func openTurnOffShortcutDialog() {
         editingValueText = turnOffDataShortcutName
         editDialog = EditDialogState(
-            title: "Turn Off Cellular Shortcut",
-            message: "Name of the shortcut in Apple Shortcuts app",
+            title: "关闭蜂窝数据的快捷指令名称",
+            message: "需与系统「快捷指令」App 中的指令名称完全一致",
             placeholder: AppConstants.Shortcuts.defaultTurnOffDataShortcutName,
             keyboardType: .default,
             onSave: { newValue in
@@ -712,8 +712,8 @@ struct UserCustomizationsView: View {
     private func openTurnOnBaseDelayDialog() {
         editingValueText = turnOnBaseDelayText
         editDialog = EditDialogState(
-            title: "Turn On Base Delay",
-            message: "Base wait time after turning on data (seconds, ≥ 0)",
+            title: "开启蜂窝后等待延迟",
+            message: "恢复蜂窝数据后的基础等待秒数（≥ 0 秒）",
             placeholder: String(AppConstants.Shortcuts.defaultTurnOnDataBaseDelay),
             keyboardType: .decimalPad,
             onSave: { newValue in
@@ -732,8 +732,8 @@ struct UserCustomizationsView: View {
     private func openTurnOffBaseDelayDialog() {
         editingValueText = turnOffBaseDelayText
         editDialog = EditDialogState(
-            title: "Turn Off Base Delay",
-            message: "Base wait time after turning off data (seconds, ≥ 0)",
+            title: "关闭蜂窝后等待延迟",
+            message: "关闭蜂窝数据后的基础等待秒数（≥ 0 秒）",
             placeholder: String(AppConstants.Shortcuts.defaultTurnOffDataBaseDelay),
             keyboardType: .decimalPad,
             onSave: { newValue in
@@ -780,13 +780,13 @@ struct UserCustomizationsView: View {
     @ViewBuilder
     private var generalSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("GENERAL")
+            Text("安装与通用自定义")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Color.white.opacity(0.6))
                 .padding(.horizontal, 16)
             
             VStack(spacing: 0) {
-                toggleRow(title: "Customize Info.plist", isOn: Binding(
+                toggleRow(title: "安装前自定义 Info.plist", isOn: Binding(
                     get: { customizeInfoPlist },
                     set: { newValue in
                         customizeInfoPlist = newValue
@@ -796,7 +796,7 @@ struct UserCustomizationsView: View {
                 
                 divider
                 
-                toggleRow(title: "Customize AppID", isOn: Binding(
+                toggleRow(title: "安装前自定义应用包名 (App ID)", isOn: Binding(
                     get: { customizeInfoPlist ? true : customizeAppId },
                     set: { newValue in
                         customizeAppId = newValue
@@ -809,7 +809,7 @@ struct UserCustomizationsView: View {
                 divider
                 
                 HStack {
-                    Text("Customize Extensions")
+                    Text("应用扩展默认处理策略")
                         .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white)
                     Spacer()
@@ -828,7 +828,7 @@ struct UserCustomizationsView: View {
                 divider
                 
                 HStack {
-                    Text("Default Import Mode")
+                    Text("点击「+」导入 IPA 时的默认方式")
                         .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white)
                     Spacer()
@@ -847,8 +847,8 @@ struct UserCustomizationsView: View {
                 divider
 
                 toggleRow(
-                    title: "Confirm App Installation",
-                    subtitle: "Prompt for confirmation before installing or importing an app",
+                    title: "安装应用前弹窗二次确认",
+                    subtitle: "从软件源下载或导入外部 IPA 前先弹窗提示确认",
                     isOn: Binding(
                         get: { isInstallConfirmationEnabled },
                         set: { newValue in
@@ -861,8 +861,8 @@ struct UserCustomizationsView: View {
                 divider
 
                 toggleRow(
-                    title: "Clear Customizations on Uninstall",
-                    subtitle: "Reset assigned profiles, custom certificates, and metadata when an app is deleted",
+                    title: "卸载应用时清除自定义配置",
+                    subtitle: "删除应用时同步清理绑定的描述文件、自定义证书和修改记录",
                     isOn: Binding(
                         get: { isClearCustomizationsOnUninstallEnabled },
                         set: { newValue in
@@ -875,8 +875,8 @@ struct UserCustomizationsView: View {
                 divider
 
                 toggleRow(
-                    title: "Auto-Launch App After Install",
-                    subtitle: "Automatically open apps after installation completes",
+                    title: "安装完成后自动打开应用",
+                    subtitle: "侧载安装成功时立即自动启动目标应用",
                     isOn: Binding(
                         get: { isAutoLaunchAppAfterInstallEnabled },
                         set: { newValue in
@@ -888,7 +888,7 @@ struct UserCustomizationsView: View {
                 
                 divider
                 
-                toggleRow(title: "Customize Entitlements", isOn: Binding(
+                toggleRow(title: "安装前自定义系统权利 (Entitlements)", isOn: Binding(
                     get: { customizeEntitlements },
                     set: { newValue in
                         customizeEntitlements = newValue
@@ -899,8 +899,8 @@ struct UserCustomizationsView: View {
                 divider
                 
                 toggleRow(
-                    title: "Auto-Fix AppGroup IDs",
-                    subtitle: isFreeAccount ? "Required for free developer accounts" : "Automatically fix App Group casing mismatches",
+                    title: "自动修正 App Group 标识符大小写",
+                    subtitle: isFreeAccount ? "免费开发者账号必须开启" : "自动修正应用组标识符与包名的大小写不一致问题",
                     isOn: Binding(
                         get: { isFreeAccount ? true : autoFixAppGroupIDs },
                         set: { newValue in
@@ -915,8 +915,8 @@ struct UserCustomizationsView: View {
                 divider
 
                 toggleRow(
-                    title: "Customize App Icon",
-                    subtitle: "Prompt to choose a custom icon before installing",
+                    title: "自定义应用图标",
+                    subtitle: "每次安装应用前提示选择自定义桌面图标",
                     isOn: Binding(
                         get: { customizeAppIcon },
                         set: { newValue in
@@ -929,8 +929,8 @@ struct UserCustomizationsView: View {
                 divider
 
                 toggleRow(
-                    title: "Customize Provisioning Profile",
-                    subtitle: "Prompt to select a provisioning profile before installing",
+                    title: "安装前手动指定描述文件",
+                    subtitle: "安装应用前弹窗选择要使用的本地描述文件",
                     isOn: Binding(
                         get: { customizeProvisioningProfile },
                         set: { newValue in
@@ -943,8 +943,8 @@ struct UserCustomizationsView: View {
                 divider
                 
                 toggleRow(
-                    title: "Prefer Resigned IPA",
-                    subtitle: "Prefer IPA (speed) vs App (storage) efficiency",
+                    title: "优先打包 IPA 传输",
+                    subtitle: "开启则速度更快，关闭则更省机身存储空间",
                     isOn: Binding(
                         get: { preferResignedIPA },
                         set: { newValue in
@@ -956,7 +956,7 @@ struct UserCustomizationsView: View {
                 
                 divider
                 
-                toggleRow(title: "Export Resigned IPAs", isOn: Binding(
+                toggleRow(title: "自动导出重签后的 IPA 到「文件」", isOn: Binding(
                     get: { isExportResignedAppEnabled },
                     set: { newValue in
                         isExportResignedAppEnabled = newValue
@@ -966,7 +966,7 @@ struct UserCustomizationsView: View {
                 
                 divider
                 
-                toggleRow(title: "Skip Uncopyable Backup Files", isOn: Binding(
+                toggleRow(title: "备份时自动跳过受系统保护无法复制的文件", isOn: Binding(
                     get: { skipNonCopyableFiles },
                     set: { newValue in
                         skipNonCopyableFiles = newValue
@@ -977,8 +977,8 @@ struct UserCustomizationsView: View {
                 divider
                 
                 toggleRow(
-                    title: "Prefer Sheet for Info.plist",
-                    subtitle: "Use sheet instead of dialog",
+                    title: "使用半屏弹窗编辑 Info.plist",
+                    subtitle: "使用底部滑动卡片代替全屏弹窗",
                     isOn: Binding(
                         get: { preferSheetForInfoPlistCustomization },
                         set: { newValue in
@@ -993,8 +993,8 @@ struct UserCustomizationsView: View {
                 divider
                 
                 toggleRow(
-                    title: "Prefer Sheet for Entitlements",
-                    subtitle: "Use sheet instead of dialog",
+                    title: "使用半屏弹窗编辑系统权利",
+                    subtitle: "使用底部滑动卡片代替全屏弹窗",
                     isOn: Binding(
                         get: { preferSheetForEntitlementsCustomization },
                         set: { newValue in
@@ -1023,7 +1023,7 @@ struct UserCustomizationsView: View {
     private func exportWireGuardConfig() {
         guard let url = Bundle.main.url(forResource: "SideStore", withExtension: "conf") else {
             if let top = UIApplication.shared.topViewController() {
-                let toastView = ToastView(text: NSLocalizedString("SideStore.conf missing!", comment: ""), detailText: "Unable to locate SideStore.conf in bundle resources.")
+                let toastView = ToastView(text: NSLocalizedString("缺少 SideStore.conf 文件！", comment: ""), detailText: "无法在安装包资源中找到 SideStore.conf。")
                 toastView.show(in: top)
             }
             return
@@ -1034,25 +1034,25 @@ struct UserCustomizationsView: View {
     private func presentResetAdiDialog() {
         guard let top = UIApplication.shared.topViewController() else { return }
         let alertController = UIAlertController(
-            title: NSLocalizedString("Reset adi.pb", comment: ""),
-            message: NSLocalizedString("This will sign you out of Apple ID in SideStore and clear the provisioned adi.pb data from your Keychain. Your active signing certificate will be preserved.", comment: ""),
+            title: NSLocalizedString("重置认证缓存 (adi.pb)", comment: ""),
+            message: NSLocalizedString("这将退出 SideStore 中的 Apple ID 并清除钥匙串内的 adi.pb 认证缓存（当前激活的本地签名证书会保留）。", comment: ""),
             preferredStyle: .alert
         )
         let contentVC = ResetAdiAlertViewController()
         alertController.setValue(contentVC, forKey: "contentViewController")
         
-        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel, handler: nil)
-        let resetAction = UIAlertAction(title: NSLocalizedString("Reset & Sign Out", comment: ""), style: .destructive) { _ in
+        let cancelAction = UIAlertAction(title: NSLocalizedString("取消", comment: ""), style: .cancel, handler: nil)
+        let resetAction = UIAlertAction(title: NSLocalizedString("重置并退出登录", comment: ""), style: .destructive) { _ in
             let keepHeaders = contentVC.isKeepHeadersChecked
             Task {
                 await AuthManager.shared.signOut(keepCertificate: true, keepAnisetteData: false, keepAnisetteHeaders: keepHeaders)
                 debugLog("Reset adi.pb (keepAnisetteHeaders: \(keepHeaders)) and signed out")
                 if let topVC = UIApplication.shared.topViewController() {
                     let detail = keepHeaders
-                        ? NSLocalizedString("Signed out of Apple ID. You can now sign back in with fresh provisioning.", comment: "")
-                        : NSLocalizedString("Signed out of Apple ID. Reset adi.pb and header configs to defaults.", comment: "")
+                        ? NSLocalizedString("已退出 Apple ID，现在可以重新登录以生成全新认证数据。", comment: "")
+                        : NSLocalizedString("已退出 Apple ID，并将 adi.pb 与自定义请求头恢复为默认值。", comment: "")
                     ToastView(
-                        text: NSLocalizedString("Cleared adi.pb!", comment: ""),
+                        text: NSLocalizedString("已重置认证缓存 (adi.pb)！", comment: ""),
                         detailText: detail
                     ).show(in: topVC)
                 }

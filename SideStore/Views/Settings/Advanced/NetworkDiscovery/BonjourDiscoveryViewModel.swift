@@ -12,27 +12,27 @@ import Combine
 import Network
 
 enum ServiceTypeSortOption: String, CaseIterable {
-    case nameAscending = "Name (A to Z)"
-    case nameDescending = "Name (Z to A)"
-    case rawType = "Raw Type Identifier"
+    case nameAscending = "名称 (A → Z)"
+    case nameDescending = "名称 (Z → A)"
+    case rawType = "原始服务类型标识"
 }
 
 enum ServiceTypeGroupOption: String, CaseIterable {
     case none = "None"
-    case protocolType = "Protocol (TCP / UDP)"
-    case category = "Category (Recognized / Other)"
-    case firstLetter = "First Letter"
+    case protocolType = "传输协议 (TCP / UDP)"
+    case category = "服务类别（已知 / 其他）"
+    case firstLetter = "按首字母"
 }
 
 enum ServiceInstanceSortOption: String, CaseIterable {
-    case nameAscending = "Name (A to Z)"
-    case nameDescending = "Name (Z to A)"
+    case nameAscending = "名称 (A → Z)"
+    case nameDescending = "名称 (Z → A)"
 }
 
 enum ServiceInstanceGroupOption: String, CaseIterable {
-    case ipVersion = "IP Version (v4/v6)"
+    case ipVersion = "IP 协议版本 (IPv4 / IPv6)"
     case none = "None"
-    case firstLetter = "First Letter"
+    case firstLetter = "按首字母"
 }
 
 struct DomainSection: Identifiable {
@@ -148,7 +148,7 @@ final class BonjourDiscoveryViewModel: ObservableObject {
             }
             return keys.map { DomainSection(id: "group_\($0)", title: "\($0) (\(grouped[$0]?.count ?? 0))", items: grouped[$0] ?? []) }
         } else {
-            return [DomainSection(id: "all_domains", title: "Browsable Domains", items: sorted)]
+            return [DomainSection(id: "all_domains", title: "可浏览的局域网域", items: sorted)]
         }
     }
     
@@ -167,7 +167,7 @@ final class BonjourDiscoveryViewModel: ObservableObject {
         
         switch serviceTypeGroupOption {
         case .none:
-            let title = "\(serviceTypes.count) Service\(serviceTypes.count == 1 ? "" : "s") Found"
+            let title = "共发现 \(serviceTypes.count) 种服务\(serviceTypes.count == 1 ? "" : "")"
             return [ServiceTypeSection(id: "all_types", title: title, items: sorted)]
             
         case .protocolType:
@@ -177,13 +177,13 @@ final class BonjourDiscoveryViewModel: ObservableObject {
             
             var sections: [ServiceTypeSection] = []
             if !tcpItems.isEmpty {
-                sections.append(ServiceTypeSection(id: "tcp_types", title: "TCP Services (\(tcpItems.count))", items: tcpItems))
+                sections.append(ServiceTypeSection(id: "tcp_types", title: "TCP 服务 (\(tcpItems.count))", items: tcpItems))
             }
             if !udpItems.isEmpty {
-                sections.append(ServiceTypeSection(id: "udp_types", title: "UDP Services (\(udpItems.count))", items: udpItems))
+                sections.append(ServiceTypeSection(id: "udp_types", title: "UDP 服务 (\(udpItems.count))", items: udpItems))
             }
             if !otherItems.isEmpty {
-                sections.append(ServiceTypeSection(id: "other_types", title: "Other Services (\(otherItems.count))", items: otherItems))
+                sections.append(ServiceTypeSection(id: "other_types", title: "其他服务 (\(otherItems.count))", items: otherItems))
             }
             return sections
             
@@ -193,10 +193,10 @@ final class BonjourDiscoveryViewModel: ObservableObject {
             
             var sections: [ServiceTypeSection] = []
             if !recognized.isEmpty {
-                sections.append(ServiceTypeSection(id: "recognized_types", title: "Recognized Services (\(recognized.count))", items: recognized))
+                sections.append(ServiceTypeSection(id: "recognized_types", title: "常见已识别服务 (\(recognized.count))", items: recognized))
             }
             if !unknown.isEmpty {
-                sections.append(ServiceTypeSection(id: "unknown_types", title: "Other / Raw Services (\(unknown.count))", items: unknown))
+                sections.append(ServiceTypeSection(id: "unknown_types", title: "其他原始服务 (\(unknown.count))", items: unknown))
             }
             return sections
             
@@ -224,7 +224,7 @@ final class BonjourDiscoveryViewModel: ObservableObject {
         
         switch instanceGroupOption {
         case .none:
-            let title = "\(instances.count) Instance\(instances.count == 1 ? "" : "s")"
+            let title = "共 \(instances.count) 个实例\(instances.count == 1 ? "" : "")"
             return [ServiceInstanceSection(id: "all_instances", title: title, items: sorted)]
             
         case .ipVersion:
