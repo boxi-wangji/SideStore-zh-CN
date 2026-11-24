@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import Minimuxer
+import MinimuxerCommon
 
 public final class AppBootManager {
     public static let shared = AppBootManager()
@@ -30,7 +31,7 @@ public final class AppBootManager {
     private init() {}
     
 
-    public nonisolated func startMinimuxer(pairingFile: String) async throws {
+    public nonisolated func startMinimuxer(pairingFile: String, preferred: PairingProtocol? = nil) async throws {
         debugLog("[AppBootManager] startMinimuxer() entered")
         defer { debugLog("[AppBootManager] startMinimuxer() exited") }
         
@@ -39,8 +40,12 @@ public final class AppBootManager {
             try await startEMProxy()
         }
 
-        let preferred = PairingFileManager.shared.preferredProtocol
-        try await minimuxerStart(pairingFile, preferred: preferred)
+        let requestedPreferred = preferred ?? PairingFileManager.shared.preferredProtocol
+        let effectivePreferred = PairingFileManager.shared.resolvedProtocol(for: pairingFile, preferred: requestedPreferred)
+        let preparedPairingFile = effectivePreferred.map {
+            PairingFileManager.shared.sanitizedPairingContent(pairingFile, for: $0)
+        } ?? pairingFile
+        try await minimuxerStart(preparedPairingFile, preferred: effectivePreferred)
         
         // Validate the pairing by trying to fetch the UDID
         do {
@@ -129,6 +134,7 @@ public final class AppBootManager {
         async let minimuxerCheck: Void = {
             debugLog("[AppBootManager] performBootSequence(): Minimuxer check starting")
             defer { debugLog("[AppBootManager] performBootSequence(): Minimuxer check completed") }
+            PairingFileManager.shared.importExternalOrLegacyPairingFileIfNeeded()
             guard let pf = PairingFileManager.shared.fetchPairingFile() else {
                 #if !targetEnvironment(simulator)
                 self.needsPairingPrompt = true

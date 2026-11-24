@@ -298,6 +298,12 @@ private struct PairingFileStep: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 16)
         }
+        .onAppear {
+            refreshPairingFileStatus()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            refreshPairingFileStatus()
+        }
         #if !os(tvOS)
         .fileImporter(
             isPresented: $isShowingFilePicker,
@@ -311,6 +317,12 @@ private struct PairingFileStep: View {
                     try PairingFileManager.shared.importPairingFile(from: url)
                     hasPairingFile = true
                     errorMessage = nil
+                    AppBootManager.shared.needsPairingPrompt = false
+                    if let pf = PairingFileManager.shared.fetchPairingFile() {
+                        Task.detached {
+                            try? await AppBootManager.shared.startMinimuxer(pairingFile: pf)
+                        }
+                    }
                     onNext()
                 } catch {
                     errorMessage = error.localizedDescription
@@ -320,6 +332,21 @@ private struct PairingFileStep: View {
             }
         }
         #endif
+    }
+
+    private func refreshPairingFileStatus() {
+        let didImport = PairingFileManager.shared.importExternalOrLegacyPairingFileIfNeeded()
+        let available = PairingFileManager.shared.hasPairingFile()
+        hasPairingFile = available
+        if available {
+            errorMessage = nil
+            if didImport, let pf = PairingFileManager.shared.fetchPairingFile() {
+                AppBootManager.shared.needsPairingPrompt = false
+                Task.detached {
+                    try? await AppBootManager.shared.startMinimuxer(pairingFile: pf)
+                }
+            }
+        }
     }
 }
 

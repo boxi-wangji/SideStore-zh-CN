@@ -20,6 +20,28 @@ public struct PairingFileMetadata: Sendable {
 final class PairingFileManager: NSObject {
     static let shared = PairingFileManager()
 
+    private let migrationLock = NSLock()
+
+    private static let remotePairingSpecificKeys: Set<String> = [
+        "public_key",
+        "private_key",
+        "identifier",
+        "alt_irk"
+    ]
+
+    private static let lockdownSpecificKeys: Set<String> = [
+        "WiFiMACAddress",
+        "SystemBUID",
+        "RootPrivateKey",
+        "HostPrivateKey",
+        "HostID",
+        "RootCertificate",
+        "UDID",
+        "EscrowBag",
+        "HostCertificate",
+        "DeviceCertificate"
+    ]
+
     static var supportedContentTypes: [UTType] {
         var types = AppConstants.Pairing.supportedExtensions.compactMap { UTType(filenameExtension: $0) }
         types.append(contentsOf: [.propertyList, .xml])
@@ -97,26 +119,95 @@ final class PairingFileManager: NSObject {
         return nil
     }
     
+    nonisolated func isAmbiguousPairingError(_ error: Error) -> Bool {
+        if case PairingError.ambiguous = error {
+            return true
+        }
+        let desc = error.localizedDescription.lowercased()
+        return desc.contains("ambiguous")
+            || (desc.contains("remote pairing") && desc.contains("lockdown"))
+    }
+
+    nonisolated func isDualProtocol(content: String) -> Bool {
+        let hasLockdown = (try? PairingFileParser.parse(content: content, preferred: .lockdown)) != nil
+        let hasRemoteRP = (try? PairingFileParser.parse(content: content, preferred: .rppairing)) != nil
+        return hasLockdown && hasRemoteRP
+    }
+
+    nonisolated func resolvedProtocol(for content: String, preferred: PairingProtocol? = nil) -> PairingProtocol? {
+        if let preferred, preferred != .unknown {
+            return preferred
+        }
+        do {
+            let parsed = try PairingFileParser.parse(content: content, preferred: nil)
+            return parsed.mode
+        } catch {
+            if isAmbiguousPairingError(error) {
+                return .lockdown
+            }
+            return nil
+        }
+    }
+
+    nonisolated func sanitizedPairingContent(_ content: String, for mode: PairingProtocol) -> String {
+        guard mode == .lockdown || mode == .rppairing,
+              isDualProtocol(content: content),
+              let data = content.data(using: .utf8),
+              var dict = (try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)) as? [String: Any] else {
+            return content
+        }
+
+        let keysToStrip = (mode == .lockdown) ? Self.remotePairingSpecificKeys : Self.lockdownSpecificKeys
+        var didStrip = false
+        for key in keysToStrip {
+            if dict.removeValue(forKey: key) != nil {
+                didStrip = true
+            }
+        }
+        guard didStrip,
+              let cleanedData = try? PropertyListSerialization.data(fromPropertyList: dict, format: .xml, options: 0),
+              let cleanedString = String(data: cleanedData, encoding: .utf8),
+              let validated = try? PairingFileParser.parse(content: cleanedString, preferred: nil),
+              validated.mode == mode else {
+            return content
+        }
+
+        debugLog("[PairingFile] Sanitized dual-protocol pairing plist for .\(mode.rawValue) protocol.")
+        return cleanedString
+    }
+
     @discardableResult
     nonisolated func parse(content: String, preferred: PairingProtocol? = nil) throws -> any PairingFile {
-        try PairingFileParser.parse(content: content, preferred: preferred)
+        do {
+            return try PairingFileParser.parse(content: content, preferred: preferred)
+        } catch {
+            // iloader 2.4.2 writes dual-protocol pairing files (10 Lockdown keys + 4 Remote Pairing keys).
+            // When no protocol is explicitly preferred, default to .lockdown for LocalDevVPN stability.
+            if preferred == nil, isAmbiguousPairingError(error) {
+                debugLog("[PairingFile] Dual-protocol pairing file detected; falling back to .lockdown protocol.")
+                return try PairingFileParser.parse(content: content, preferred: .lockdown)
+            }
+            throw error
+        }
     }
 
     @discardableResult
     func savePairingFile(contents: String, preferred: PairingProtocol? = nil) throws -> any PairingFile {
         let parsed = try parse(content: contents, preferred: preferred)
-        let destinationURL = pairingFileURL(for: parsed.mode)
+        let normalizedContents = sanitizedPairingContent(contents, for: parsed.mode)
+        let finalParsed = (try? parse(content: normalizedContents, preferred: parsed.mode)) ?? parsed
+        let destinationURL = pairingFileURL(for: finalParsed.mode)
         let fm = FileManager.default
         if fm.fileExists(atPath: destinationURL.path) {
             try? fm.removeItem(at: destinationURL)
         }
-        try contents.write(to: destinationURL, atomically: true, encoding: .utf8)
-        debugLog("[PairingFile] Saved \(parsed.mode.rawValue) pairing file to: \(destinationURL.path)")
+        try normalizedContents.write(to: destinationURL, atomically: true, encoding: .utf8)
+        debugLog("[PairingFile] Saved \(finalParsed.mode.rawValue) pairing file to: \(destinationURL.path)")
         UserDefaults.standard.isPairingReset = false
-        return parsed
+        return finalParsed
     }
 
-    func inspectPairingFile(from url: URL) throws -> (content: String, file: any PairingFile) {
+    func inspectPairingFile(from url: URL, preferred: PairingProtocol? = nil) throws -> (content: String, file: any PairingFile) {
         let isSecured = url.startAccessingSecurityScopedResource()
         defer {
             if isSecured {
@@ -127,14 +218,80 @@ final class PairingFileManager: NSObject {
         guard let content = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) else {
             throw CocoaError(.fileReadInapplicableStringEncoding)
         }
-        let parsed = try parse(content: content, preferred: nil)
+        let parsed = try parse(content: content, preferred: preferred)
         return (content, parsed)
     }
 
     func importPairingFile(from url: URL, preferred: PairingProtocol? = nil) throws {
-        let (content, _) = try inspectPairingFile(from: url)
+        let (content, _) = try inspectPairingFile(from: url, preferred: preferred)
         let parsed = try savePairingFile(contents: content, preferred: preferred)
         persistedActiveProtocol = parsed.mode
+    }
+
+    /// Automatically imports `ALTPairingFile.mobiledevicepairing` (e.g. placed by iloader "Place In All Apps")
+    /// and repairs/sanitizes any pre-existing dual-protocol pairing files on disk so Onboarding & Boot work seamlessly.
+    @discardableResult
+    nonisolated func importExternalOrLegacyPairingFileIfNeeded() -> Bool {
+        migrationLock.withLock {
+            let fm = FileManager.default
+            var didImportOrActivate = false
+
+            let legacyURL = fm.documentsDirectory.appendingPathComponent(AppConstants.Pairing.legacyPairingFileName)
+            if fm.fileExists(atPath: legacyURL.path),
+               let data = try? Data(contentsOf: legacyURL),
+               let content = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1),
+               !content.isEmpty {
+                let dual = isDualProtocol(content: content)
+                if let primary = try? parse(content: content, preferred: nil) {
+                    if (try? savePairingFile(contents: content, preferred: primary.mode)) != nil {
+                        if dual {
+                            let secondaryMode: PairingProtocol = (primary.mode == .lockdown) ? .rppairing : .lockdown
+                            _ = try? savePairingFile(contents: content, preferred: secondaryMode)
+                        }
+                        if let pref = preferredProtocol, hasPairingFile(for: pref) {
+                            persistedActiveProtocol = pref
+                        } else {
+                            persistedActiveProtocol = primary.mode
+                        }
+                        try? fm.removeItem(at: legacyURL)
+                        debugLog("[PairingFile] Auto-imported external/legacy pairing file (\(primary.mode.rawValue), dual=\(dual)).")
+                        didImportOrActivate = true
+                    }
+                }
+            }
+
+            // Sanitize any existing dual-protocol files on disk (e.g. from overwrite upgrade)
+            for proto in [PairingProtocol.lockdown, PairingProtocol.rppairing] {
+                let url = pairingFileURL(for: proto)
+                if fm.fileExists(atPath: url.path),
+                   let content = try? String(contentsOf: url, encoding: .utf8),
+                   !content.isEmpty,
+                   isDualProtocol(content: content) {
+                    let cleaned = sanitizedPairingContent(content, for: proto)
+                    if cleaned != content {
+                        try? cleaned.write(to: url, atomically: true, encoding: .utf8)
+                        debugLog("[PairingFile] Sanitized existing dual-protocol file at \(url.lastPathComponent) for .\(proto.rawValue).")
+                    }
+                }
+            }
+
+            // If valid pairing files already exist on disk (e.g. migrated or placed externally)
+            // while hasPairingFile() still reports false, activate them automatically.
+            if !hasPairingFile() {
+                for candidate in [PairingProtocol.lockdown, PairingProtocol.rppairing] {
+                    if let content = fetchPairingFile(for: candidate),
+                       (try? parse(content: content, preferred: candidate)) != nil {
+                        UserDefaults.standard.isPairingReset = false
+                        persistedActiveProtocol = candidate
+                        debugLog("[PairingFile] Auto-activated existing \(candidate.rawValue) pairing file on disk.")
+                        didImportOrActivate = true
+                        break
+                    }
+                }
+            }
+
+            return didImportOrActivate
+        }
     }
 
     func deletePairingFile(for mode: PairingProtocol) {

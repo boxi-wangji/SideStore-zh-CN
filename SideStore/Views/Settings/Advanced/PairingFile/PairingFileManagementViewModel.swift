@@ -78,6 +78,21 @@ public final class PairingFileManagementViewModel: ObservableObject {
     public func handleImportResult(_ result: Result<URL, Error>) {
         switch result {
         case .success(let url):
+            let savedPref = preferredProtocol ?? targetImportMode
+            // If the file directly satisfies the target/preferred protocol (including iloader dual-protocol files),
+            // import directly for that protocol without a false protocol-mismatch alert.
+            if let saved = savedPref,
+               (try? PairingFileManager.shared.inspectPairingFile(from: url, preferred: saved)) != nil {
+                do {
+                    try PairingFileManager.shared.importPairingFile(from: url, preferred: saved)
+                    targetImportMode = nil
+                    refresh()
+                } catch {
+                    activeAlert = .importError("导入配对文件失败：\(error.localizedDescription)")
+                }
+                return
+            }
+
             guard let (_, parsed) = try? PairingFileManager.shared.inspectPairingFile(from: url) else {
                 do {
                     try PairingFileManager.shared.importPairingFile(from: url, preferred: targetImportMode)
@@ -89,7 +104,6 @@ public final class PairingFileManagementViewModel: ObservableObject {
                 return
             }
 
-            let savedPref = preferredProtocol ?? targetImportMode
             if let saved = savedPref, parsed.mode != saved {
                 presentProtocolMismatchAlert(saved: saved, provided: parsed.mode, url: url)
                 return

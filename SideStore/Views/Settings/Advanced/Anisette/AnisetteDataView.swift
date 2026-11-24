@@ -81,6 +81,7 @@ class AnisetteDataViewModel: ObservableObject {
     
     func save() async {
         AnisetteConfigManager.shared.isOfflineMode = isOfflineMode
+        clientInfo = AppConstants.Anisette.sanitizedClientInfo(clientInfo)
         let config = AnisetteConfig(
             clientInfo: clientInfo,
             userAgent: userAgent,
@@ -104,7 +105,8 @@ class AnisetteDataViewModel: ObservableObject {
         }
         
         do {
-            let config = try Foundation.JSONDecoder().decode(AnisetteConfig.self, from: data)
+            var config = try Foundation.JSONDecoder().decode(AnisetteConfig.self, from: data)
+            config.clientInfo = AppConstants.Anisette.sanitizedClientInfo(config.clientInfo)
             
             clientInfo = config.clientInfo
             userAgent = config.userAgent
@@ -117,6 +119,7 @@ class AnisetteDataViewModel: ObservableObject {
             customXcodeVersion = config.customXcodeVersion ?? ""
             
             await AnisetteConfigManager.shared.saveConfig(config)
+            updateRawEditableJSON()
             showToast(text: "JSON 配置保存成功！")
         } catch {
             showToast(text: "JSON 格式无效", error: error)
@@ -229,8 +232,8 @@ class AnisetteDataViewModel: ObservableObject {
             return nil
         }
         
-        if let val = getValue(forKeys: ["client_info", "clientInfo", "X-Mme-Client-Info"]) {
-            clientInfo = val
+        if let val = getValue(forKeys: ["client_info", "clientInfo", "X-Mme-Client-Info", "X-MMe-Client-Info"]) {
+            clientInfo = AppConstants.Anisette.sanitizedClientInfo(val)
         }
         if let val = getValue(forKeys: ["user_agent", "userAgent", "User-Agent"]) {
             userAgent = val

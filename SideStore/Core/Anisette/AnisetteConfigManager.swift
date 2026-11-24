@@ -81,9 +81,60 @@ public actor AnisetteConfigManager {
         return libraryDirectory.appendingPathComponent("anisette-server-headers.json")
     }
     
+    private nonisolated static let clientInfoHeaderKeys: Set<String> = [
+        "client_info",
+        "clientinfo",
+        "x-mme-client-info"
+    ]
+
+    private nonisolated static func sanitizeServerHeaders(_ headers: [String: String]) -> [String: String] {
+        var sanitized = headers
+        for (key, val) in headers where clientInfoHeaderKeys.contains(key.lowercased()) {
+            sanitized[key] = AppConstants.Anisette.sanitizedClientInfo(val)
+        }
+        return sanitized
+    }
+
+    public nonisolated func migrateLegacyClientInfoIfNeeded() {
+        let ud = UserDefaults.standard
+        if let stored = ud.customAnisetteClientInfo, !stored.isEmpty {
+            let sanitized = AppConstants.Anisette.sanitizedClientInfo(stored)
+            if sanitized != stored {
+                ud.customAnisetteClientInfo = sanitized
+            }
+        }
+
+        if let data = try? Data(contentsOf: configFileURL),
+           var config = try? Foundation.JSONDecoder().decode(AnisetteConfig.self, from: data) {
+            let sanitized = AppConstants.Anisette.sanitizedClientInfo(
+                config.clientInfo.isEmpty ? AppConstants.Anisette.defaultClientInfo : config.clientInfo
+            )
+            if sanitized != config.clientInfo {
+                config.clientInfo = sanitized
+                let encoder = Foundation.JSONEncoder()
+                encoder.outputFormatting = .prettyPrinted
+                if let updatedData = try? encoder.encode(config) {
+                    try? updatedData.write(to: configFileURL, options: .atomic)
+                }
+            }
+        }
+
+        if let data = try? Data(contentsOf: serverHeadersFileURL),
+           let headers = try? Foundation.JSONDecoder().decode([String: String].self, from: data) {
+            let sanitizedHeaders = Self.sanitizeServerHeaders(headers)
+            if sanitizedHeaders != headers {
+                let encoder = Foundation.JSONEncoder()
+                encoder.outputFormatting = .prettyPrinted
+                if let updatedData = try? encoder.encode(sanitizedHeaders) {
+                    try? updatedData.write(to: serverHeadersFileURL, options: .atomic)
+                }
+            }
+        }
+    }
+
     public func saveServerHeaders(_ headers: [String: String]) {
         var existing = loadServerHeaders()
-        for (key, val) in headers {
+        for (key, val) in Self.sanitizeServerHeaders(headers) {
             existing[key] = val
         }
         let encoder = Foundation.JSONEncoder()
@@ -130,7 +181,21 @@ public actor AnisetteConfigManager {
             return config
         }()
 
-        let resolvedClientInfo   = (udClientInfo?.isEmpty == false ? udClientInfo : fileConfig?.clientInfo) ?? AppConstants.Anisette.defaultClientInfo
+        let rawClientInfo        = (udClientInfo?.isEmpty == false ? udClientInfo : fileConfig?.clientInfo) ?? AppConstants.Anisette.defaultClientInfo
+        let resolvedClientInfo   = AppConstants.Anisette.sanitizedClientInfo(rawClientInfo)
+        if resolvedClientInfo != rawClientInfo {
+            if let existing = udClientInfo, !existing.isEmpty {
+                ud.customAnisetteClientInfo = resolvedClientInfo
+            }
+            if var updatedFileConfig = fileConfig, updatedFileConfig.clientInfo != resolvedClientInfo {
+                updatedFileConfig.clientInfo = resolvedClientInfo
+                let encoder = Foundation.JSONEncoder()
+                encoder.outputFormatting = .prettyPrinted
+                if let data = try? encoder.encode(updatedFileConfig) {
+                    try? data.write(to: configFileURL, options: .atomic)
+                }
+            }
+        }
         let resolvedUserAgent    = (udUserAgent?.isEmpty == false ? udUserAgent : fileConfig?.userAgent) ?? AppConstants.Anisette.defaultUserAgent
         let resolvedDeviceID     = (udDeviceID?.isEmpty == false ? udDeviceID : fileConfig?.customDeviceID)
         let resolvedLocalUserID  = (udLocalUserID?.isEmpty == false ? udLocalUserID : fileConfig?.customLocalUserID)
@@ -155,8 +220,11 @@ public actor AnisetteConfigManager {
 
     public func makeRequestHeaders() -> AnisetteRequestHeaders {
         let config = loadConfig()
+        let resolvedClientInfo = AppConstants.Anisette.sanitizedClientInfo(
+            config.clientInfo.isEmpty ? AppConstants.Anisette.defaultClientInfo : config.clientInfo
+        )
         return AnisetteRequestHeaders().with {
-            $0.clientInfo = config.clientInfo.isEmpty ? AppConstants.Anisette.defaultClientInfo : config.clientInfo
+            $0.clientInfo = resolvedClientInfo
             $0.userAgent  = config.userAgent.isEmpty ? AppConstants.Anisette.defaultUserAgent : config.userAgent
             if let customLU = config.customLocalUserID, !customLU.isEmpty { $0.localUserID = customLU }
             if let customDev = config.customDeviceID, !customDev.isEmpty { $0.deviceID = customDev }
@@ -172,28 +240,32 @@ public actor AnisetteConfigManager {
     }
     
     public func saveConfig(_ config: AnisetteConfig) {
+        var sanitizedConfig = config
+        sanitizedConfig.clientInfo = AppConstants.Anisette.sanitizedClientInfo(
+            config.clientInfo.isEmpty ? AppConstants.Anisette.defaultClientInfo : config.clientInfo
+        )
         let encoder = Foundation.JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
-        if let data = try? encoder.encode(config) {
+        if let data = try? encoder.encode(sanitizedConfig) {
             try? data.write(to: configFileURL, options: .atomic)
         }
         let ud = UserDefaults.standard
-        ud.customAnisetteClientInfo   = config.clientInfo
-        ud.customAnisetteUserAgent    = config.userAgent
-        ud.customAnisetteDeviceID     = config.customDeviceID
-        ud.customAnisetteLocalUserID  = config.customLocalUserID
-        ud.customAnisetteLocale       = config.customLocale
-        ud.customAnisetteTimeZone     = config.customTimeZone
-        ud.customAnisetteXcodeVersion = config.customXcodeVersion
-        ud.customAnisetteSerialNumber = config.customSerialNumber
-        ud.customAnisetteRoutingInfo  = config.customRoutingInfo
+        ud.customAnisetteClientInfo   = sanitizedConfig.clientInfo
+        ud.customAnisetteUserAgent    = sanitizedConfig.userAgent
+        ud.customAnisetteDeviceID     = sanitizedConfig.customDeviceID
+        ud.customAnisetteLocalUserID  = sanitizedConfig.customLocalUserID
+        ud.customAnisetteLocale       = sanitizedConfig.customLocale
+        ud.customAnisetteTimeZone     = sanitizedConfig.customTimeZone
+        ud.customAnisetteXcodeVersion = sanitizedConfig.customXcodeVersion
+        ud.customAnisetteSerialNumber = sanitizedConfig.customSerialNumber
+        ud.customAnisetteRoutingInfo  = sanitizedConfig.customRoutingInfo
     }
     
     public func importFromFile(url: URL) throws -> AnisetteConfig {
         let data = try Data(contentsOf: url)
         
         // Flexible decoding supporting both camelCase and snake_case
-        let config: AnisetteConfig
+        var config: AnisetteConfig
         if let direct = try? Foundation.JSONDecoder().decode(AnisetteConfig.self, from: data) {
             config = direct
         } else {
@@ -232,6 +304,7 @@ public actor AnisetteConfigManager {
             )
         }
         
+        config.clientInfo = AppConstants.Anisette.sanitizedClientInfo(config.clientInfo)
         saveConfig(config)
         return config
     }

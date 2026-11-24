@@ -242,8 +242,15 @@ func reinitializePairingData(pairingFile: String) async throws {
     debugLog("[SideStore] reinitializePairingData(pairingFile) is no-op on simulator")
     #else
     debugLog("[SideStore] reinitializePairingData(pairingFile) invoked")
+    let effectivePreferred = PairingFileManager.shared.resolvedProtocol(
+        for: pairingFile,
+        preferred: PairingFileManager.shared.preferredProtocol
+    )
+    let preparedPairingFile = effectivePreferred.map {
+        PairingFileManager.shared.sanitizedPairingContent(pairingFile, for: $0)
+    } ?? pairingFile
     try await withRemotePairingRetry {
-        try await minimuxer.core.reinitializePairingData(pairingFile: pairingFile)
+        try await minimuxer.core.reinitializePairingData(pairingFile: preparedPairingFile)
     }
     #endif
 }
@@ -257,8 +264,12 @@ func minimuxerStart(_ pairingFile: String, preferred: PairingProtocol? = nil) as
     #else
     await bindConnectionConfig()
     debugLog("[SideStore] minimuxerStart(pairingFile) invoked")
+    let effectivePreferred = PairingFileManager.shared.resolvedProtocol(for: pairingFile, preferred: preferred)
+    let preparedPairingFile = effectivePreferred.map {
+        PairingFileManager.shared.sanitizedPairingContent(pairingFile, for: $0)
+    } ?? pairingFile
     try await withRemotePairingRetry {
-        try await minimuxer.core.start(pairingFile: pairingFile, mountPath: ddiMountPath, preferred: preferred)
+        try await minimuxer.core.start(pairingFile: preparedPairingFile, mountPath: ddiMountPath, preferred: effectivePreferred)
     }
     #endif
 }
@@ -483,7 +494,7 @@ func minimuxerSwitchPairingProtocol(to proto: PairingProtocol) async throws {
             throw MinimuxerError.pairingNotLoaded("Missing pairing file for \(proto.rawValue)")
         }
         try await minimuxerStop()
-        try await AppBootManager.shared.startMinimuxer(pairingFile: pf)
+        try await AppBootManager.shared.startMinimuxer(pairingFile: pf, preferred: proto)
     }
     #endif
 }

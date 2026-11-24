@@ -131,8 +131,14 @@ final class PairingViewController: NSObject {
         on vc: UIViewController,
         pairingContent: String
     ) async -> Bool {
-        guard let saved = PairingFileManager.shared.preferredProtocol,
-              let parsed = try? PairingFileManager.shared.parse(content: pairingContent, preferred: nil),
+        guard let saved = PairingFileManager.shared.preferredProtocol else {
+            return false
+        }
+        // Dual-protocol files (e.g. iloader 2.4.2) satisfy the saved preferred protocol without mismatch.
+        if (try? PairingFileManager.shared.parse(content: pairingContent, preferred: saved)) != nil {
+            return false
+        }
+        guard let parsed = try? PairingFileManager.shared.parse(content: pairingContent, preferred: nil),
               parsed.mode != saved else {
             return false
         }
@@ -146,7 +152,14 @@ final class PairingViewController: NSObject {
     private func finalizeImport(from url: URL) {
         do {
             debugLog("[PairingFile] User picked pairing file from: \(url.path)")
-            try PairingFileManager.shared.importPairingFile(from: url)
+            let targetPreferred: PairingProtocol?
+            if let saved = PairingFileManager.shared.preferredProtocol,
+               (try? PairingFileManager.shared.inspectPairingFile(from: url, preferred: saved)) != nil {
+                targetPreferred = saved
+            } else {
+                targetPreferred = nil
+            }
+            try PairingFileManager.shared.importPairingFile(from: url, preferred: targetPreferred)
             self.completion?(url)
         } catch {
             debugLog("[PairingFile] Error importing pairing file: \(error)")
@@ -167,7 +180,11 @@ extension PairingViewController: UIDocumentPickerDelegate {
 
         let presentingVC = controller.presentingViewController
 
-        guard let (content, parsed) = try? PairingFileManager.shared.inspectPairingFile(from: url) else {
+        let savedPreferred = PairingFileManager.shared.preferredProtocol
+        let inspectionResult = (savedPreferred != nil ? (try? PairingFileManager.shared.inspectPairingFile(from: url, preferred: savedPreferred)) : nil)
+            ?? (try? PairingFileManager.shared.inspectPairingFile(from: url))
+
+        guard let (content, parsed) = inspectionResult else {
             finalizeImport(from: url)
             controller.dismiss(animated: true, completion: nil)
             return

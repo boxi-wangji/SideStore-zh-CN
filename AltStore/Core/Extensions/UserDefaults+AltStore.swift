@@ -606,6 +606,23 @@ public extension UserDefaults
             }
             UserDefaults.standard.set(true, forKey: zhCNAnisetteV2MigrationKey)
         }
+
+        // SideStore-zh-CN v3: one-time migration to replace rejected `<macOS;` clientInfo
+        // with `<Mac OS X;` so Apple gsa.apple.com does not reject auth requests with HTTP 503.
+        let zhCNAnisetteV3MigrationKey = "zhCNAnisetteDefaultsV3Applied"
+        if !UserDefaults.standard.bool(forKey: zhCNAnisetteV3MigrationKey) {
+            if let persistedClientInfo = UserDefaults.standard.customAnisetteClientInfo, !persistedClientInfo.isEmpty {
+                let sanitized = AppConstants.Anisette.sanitizedClientInfo(persistedClientInfo)
+                if sanitized != persistedClientInfo {
+                    UserDefaults.standard.customAnisetteClientInfo = sanitized
+                }
+            }
+            if let persistedURL = UserDefaults.standard.object(forKey: #keyPath(UserDefaults.menuAnisetteURL)) as? String,
+               persistedURL.isEmpty || AppConstants.Anisette.Servers.deprecatedServerURLs.contains(persistedURL) {
+                UserDefaults.standard.menuAnisetteURL = AppConstants.Anisette.Servers.defaultServerURL
+            }
+            UserDefaults.standard.set(true, forKey: zhCNAnisetteV3MigrationKey)
+        }
         
         // MDC is unsupported and spareRestore is patched
         if !isMacDirtyCowSupported && ProcessInfo().sparseRestorePatched

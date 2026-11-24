@@ -78,7 +78,10 @@ public actor OnDeviceAnisetteManager {
             debugLog("[OnDeviceAnisetteManager] [Fetch] Fresh local provisioning completed -> saved new adi.pb (\(freshBlob.count) bytes) to Keychain")
         }
 
+        var sanitizedData = anisetteData
+        sanitizedData.clientInfo = AppConstants.Anisette.sanitizedClientInfo(sanitizedData.clientInfo)
+
         debugLog("[OnDeviceAnisetteManager] [Fetch] SUCCESS: AnisetteData generated successfully.")
-        return anisetteData
+        return sanitizedData
     }
 }

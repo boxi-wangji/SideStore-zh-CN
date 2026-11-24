@@ -68,8 +68,15 @@ public enum AppConstants {
         public static let defaultODAMetadataURL       = URL(string: "https://zzz.haus/oda.json")!
         public static var defaultODAMetadataURLString: String { defaultODAMetadataURL.absoluteString }
 
-        // Proxied from upstream SideSign
-        public static let defaultClientInfo           = Constants.Anisette.defaultClientInfo
+        // Apple gsa.apple.com rejects `<macOS;` in X-MMe-Client-Info with HTTP 503; normalize to `<Mac OS X;`.
+        public static func sanitizedClientInfo(_ value: String) -> String {
+            value
+                .replacingOccurrences(of: "<macOS;", with: "<Mac OS X;", options: .caseInsensitive)
+                .replacingOccurrences(of: "macOS;", with: "Mac OS X;", options: .caseInsensitive)
+        }
+
+        // Proxied from upstream SideSign (normalized for Apple GSA compatibility)
+        public static let defaultClientInfo           = sanitizedClientInfo(Constants.Anisette.defaultClientInfo)
         public static let defaultUserAgent            = Constants.Anisette.defaultUserAgent
 
         public enum URLs {

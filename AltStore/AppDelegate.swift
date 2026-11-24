@@ -126,6 +126,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Register default settings before doing anything else.
         UserDefaults.registerDefaults()
+        AnisetteConfigManager.shared.migrateLegacyClientInfoIfNeeded()
+        PairingFileManager.shared.importExternalOrLegacyPairingFileIfNeeded()
         BackgroundServiceManager.ensureBackgroundServicesStarted()
         syncMinimuxerBackendFromUserDefaults()
 
@@ -236,6 +238,13 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillEnterForeground(_ application: UIApplication)
     {
         BackgroundServiceManager.ensureBackgroundServicesStarted()
+        if PairingFileManager.shared.importExternalOrLegacyPairingFileIfNeeded(),
+           let pf = PairingFileManager.shared.fetchPairingFile() {
+            AppBootManager.shared.needsPairingPrompt = false
+            Task.detached {
+                try? await AppBootManager.shared.startMinimuxer(pairingFile: pf)
+            }
+        }
         Task.detached {
             await AppManager.shared.reconcileInstalledApps()
         }
