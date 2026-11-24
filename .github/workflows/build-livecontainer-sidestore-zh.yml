@@ -1,0 +1,486 @@
+name: Build LiveContainer + SideStore Simplified Chinese Nightly IPA (zh-CN)
+
+on:
+  workflow_dispatch:
+    inputs:
+      livecontainer_tag:
+        description: 'LiveContainer 发布标签（默认 nightly）'
+        required: false
+        type: string
+        default: 'nightly'
+      publish_release:
+        description: '构建完成后同步发布纯净无私钥合体包到 GitHub Releases'
+        required: false
+        type: boolean
+        default: false
+      clean_cache:
+        description: '构建前清空 Xcode DerivedData 与 SPM 缓存'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - main
+    paths:
+      - 'SideStore/**'
+      - 'AltStore/**'
+      - 'Shared/**'
+      - '.github/workflows/build-livecontainer-sidestore-zh.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-livecontainer-sidestore-zh-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-livecontainer-sidestore-zh:
+    name: Build LiveContainer+SideStore-zh-CN-Nightly.ipa (macOS 15)
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Security Gate - Verify Repo Has Zero Pairing Files or Private Keys
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -iE '(PreinstalledPairing\.plist|\.mobiledevicepair(ing)?$|PairingFile_(Lockdown|RemoteRP)\.plist)'; then
+            echo "ERROR: Pairing file detected in git index! Refusing to build."
+            exit 1
+          fi
+          echo "OK: Repository is clean (zero pairing files tracked)."
+
+      - name: Ensure Submodules & Bundle Symlinks (ZIP-Upload Safe)
+        run: |
+          set -euo pipefail
+
+          git submodule sync --recursive || true
+          git submodule update --init --recursive || true
+
+          if [ ! -f "Dependencies/minimuxer/Package.swift" ]; then
+            MINIMUXER_URL=$(git config -f .gitmodules --get submodule.Dependencies/minimuxer.url || echo "https://github.com/SideStore/minimuxer")
+            MINIMUXER_BRANCH=$(git config -f .gitmodules --get submodule.Dependencies/minimuxer.branch || echo "develop")
+            rm -rf Dependencies/minimuxer
+            git clone --branch "$MINIMUXER_BRANCH" "$MINIMUXER_URL" Dependencies/minimuxer
+            git -C Dependencies/minimuxer submodule update --init --recursive
+          fi
+
+          if [ ! -f "Dependencies/SideSign/Package.swift" ]; then
+            SIDESIGN_URL=$(git config -f .gitmodules --get submodule.Dependencies/SideSign.url || echo "https://github.com/SideStore/SideSign")
+            SIDESIGN_BRANCH=$(git config -f .gitmodules --get submodule.Dependencies/SideSign.branch || echo "main")
+            rm -rf Dependencies/SideSign
+            git clone --branch "$SIDESIGN_BRANCH" "$SIDESIGN_URL" Dependencies/SideSign
+            git -C Dependencies/SideSign submodule update --init --recursive
+          fi
+
+          mkdir -p AltStore/Resources
+          if [ ! -L "AltStore/Resources/SideBackup.ipa" ]; then
+            rm -rf AltStore/Resources/SideBackup.ipa
+            ln -s ../../build/SideBackup.ipa AltStore/Resources/SideBackup.ipa
+          fi
+          ls -la AltStore/Resources/SideBackup.ipa
+
+      - name: Select Latest Installed Stable Xcode on macos-15
+        run: |
+          set -euo pipefail
+          ls -d /Applications/Xcode*.app || true
+
+          SELECTED_XCODE=$(python3 - <<'PY'
+          import glob, os, plistlib, re
+
+          candidates = []
+          for app in glob.glob("/Applications/Xcode*.app"):
+              info_path = os.path.join(app, "Contents", "Info.plist")
+              dev_dir = os.path.join(app, "Contents", "Developer")
+              if not (os.path.isfile(info_path) and os.path.isdir(dev_dir)):
+                  continue
+              try:
+                  with open(info_path, "rb") as f:
+                      info = plistlib.load(f)
+                  ver_str = str(info.get("CFBundleShortVersionString", "0"))
+                  nums = tuple(int(x) for x in re.findall(r"\d+", ver_str))
+                  is_beta = 1 if ("beta" in app.lower() or "preview" in app.lower()) else 0
+                  candidates.append(((1 - is_beta), nums, os.path.realpath(app)))
+              except Exception:
+                  continue
+
+          if candidates:
+              candidates.sort(reverse=True)
+              print(candidates[0][2])
+          elif os.path.isdir("/Applications/Xcode.app"):
+              print("/Applications/Xcode.app")
+          PY
+          )
+
+          if [ -n "$SELECTED_XCODE" ] && [ -d "$SELECTED_XCODE/Contents/Developer" ]; then
+            echo "Selecting Xcode: $SELECTED_XCODE"
+            sudo xcode-select -s "$SELECTED_XCODE/Contents/Developer"
+            echo "DEVELOPER_DIR=$SELECTED_XCODE/Contents/Developer" >> "$GITHUB_ENV"
+          fi
+
+          sudo xcodebuild -runFirstLaunch || true
+          xcodebuild -version
+          swift --version
+
+      - name: Install Build Tools (ldid & xcbeautify)
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+        run: |
+          command -v ldid >/dev/null 2>&1 || brew install ldid
+          command -v xcbeautify >/dev/null 2>&1 || brew install xcbeautify
+          ldid -h >/dev/null 2>&1 || true
+          xcbeautify --version
+
+      - name: Setup Version Metadata
+        run: |
+          set -euo pipefail
+          BUILD_NUM="${{ github.run_number }}"
+          BASE_VERSION=$(python3 scripts/ci/workflow.py get-marketing-version)
+          SHORT_COMMIT=$(git rev-parse --short HEAD)
+
+          FINAL_VERSION=$(python3 scripts/ci/workflow.py compute-normalized \
+            "$BASE_VERSION" \
+            "$BUILD_NUM" \
+            "$SHORT_COMMIT")
+
+          python3 scripts/ci/workflow.py set-marketing-version "$FINAL_VERSION"
+
+          LC_TAG="${{ inputs.livecontainer_tag || 'nightly' }}"
+          echo "LC_TAG=$LC_TAG" | tee -a "$GITHUB_ENV"
+          echo "BUILD_NUM=$BUILD_NUM" | tee -a "$GITHUB_ENV"
+          echo "SHORT_COMMIT=$SHORT_COMMIT" | tee -a "$GITHUB_ENV"
+          echo "MARKETING_VERSION=$FINAL_VERSION" | tee -a "$GITHUB_ENV"
+
+      - name: Cache Xcode DerivedData & SwiftPM
+        if: ${{ inputs.clean_cache != true }}
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData
+            ~/Library/Caches/org.swift.swiftpm
+          key: sidestore-zh-macos15-${{ github.ref_name }}-${{ hashFiles('AltStore.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'Dependencies/*/Package.swift') }}
+          restore-keys: |
+            sidestore-zh-macos15-${{ github.ref_name }}-
+            sidestore-zh-macos15-
+
+      - name: Clean Build Cache (Optional)
+        if: ${{ inputs.clean_cache == true }}
+        run: |
+          python3 scripts/ci/workflow.py clean
+          python3 scripts/ci/workflow.py clean-derived-data
+          python3 scripts/ci/workflow.py clean-spm-cache
+
+      - name: Resolve Swift Package Dependencies
+        run: |
+          for attempt in 1 2 3; do
+            if xcodebuild -resolvePackageDependencies -project AltStore.xcodeproj -scheme SideStore; then
+              break
+            fi
+            echo "SPM resolution attempt $attempt failed, retrying in 5s..."
+            sleep 5
+          done
+
+      - name: Build Pure SideStore-zh-CN.ipa
+        run: |
+          set -euo pipefail
+          mkdir -p build/logs
+
+          NSUnbufferedIO=YES make -B build 2>&1 \
+            | tee -a build/logs/build.log \
+            | xcbeautify --renderer github-actions
+
+          make fakesign 2>&1 | tee -a build/logs/build.log
+          make ipa 2>&1 | tee -a build/logs/build.log
+
+          cp -f SideStore.ipa SideStore-zh-CN.ipa
+          test -s SideStore-zh-CN.ipa
+          unzip -t SideStore-zh-CN.ipa >/dev/null
+          ls -lh SideStore-zh-CN.ipa
+
+      - name: Fetch Official LiveContainer Nightly Base & Packaging Tools
+        run: |
+          set -euo pipefail
+          mkdir -p lc_merge/tools lc_merge/lc_work lc_merge/ss_work
+
+          echo "=== Downloading Official LiveContainer+SideStore.ipa (tag: ${LC_TAG}) ==="
+          curl -fsSL -L \
+            "https://github.com/LiveContainer/LiveContainer/releases/download/${LC_TAG}/LiveContainer%2BSideStore.ipa" \
+            -o lc_merge/official-lc-ss.ipa
+
+          echo "=== Downloading Official LiveContainer sidelc Configs ==="
+          curl -fsSL -L \
+            "https://raw.githubusercontent.com/LiveContainer/LiveContainer/main/.github/sidelc/LCAppInfo.plist" \
+            -o lc_merge/tools/LCAppInfo.plist
+          curl -fsSL -L \
+            "https://raw.githubusercontent.com/LiveContainer/LiveContainer/main/.github/sidelc/LiveWidgetExtension_adhoc.xml" \
+            -o lc_merge/tools/LiveWidgetExtension_adhoc.xml
+
+          echo "=== Downloading Official LiveContainer/dylibify (1.0) ==="
+          curl -fsSL -L \
+            "https://github.com/LiveContainer/dylibify/releases/download/1.0/dylibify" \
+            -o lc_merge/tools/dylibify
+          chmod +x lc_merge/tools/dylibify
+          file lc_merge/tools/dylibify
+          ls -lh lc_merge/official-lc-ss.ipa lc_merge/tools/
+
+      - name: Merge SideStore-zh-CN into LiveContainer Nightly & Complete LiveContainer zh-CN Localization
+        run: |
+          set -euo pipefail
+
+          unzip -q lc_merge/official-lc-ss.ipa -d lc_merge/lc_work
+          unzip -q SideStore-zh-CN.ipa -d lc_merge/ss_work
+
+          LC_APP="lc_merge/lc_work/Payload/LiveContainer.app"
+          SS_FW="$LC_APP/Frameworks/SideStoreApp.framework"
+          WIDGET_APPEX="$LC_APP/PlugIns/LiveWidgetExtension.appex"
+
+          echo "=== 1. Complete LiveContainer zh-Hans.lproj & Settings.bundle Localization ==="
+          python3 - <<'PY'
+          import os, plistlib
+
+          lc_app = "lc_merge/lc_work/Payload/LiveContainer.app"
+          en_path = os.path.join(lc_app, "en.lproj", "Localizable.strings")
+          zh_path = os.path.join(lc_app, "zh-Hans.lproj", "Localizable.strings")
+
+          with open(en_path, "rb") as f:
+              en_dict = plistlib.load(f)
+          with open(zh_path, "rb") as f:
+              zh_dict = plistlib.load(f)
+
+          zh_additions = {
+              "lc.appSettings.classicModeDesc": "（实验性）引导系统以合适分辨率显示应用。在 iPadOS 上，如果应用不原生支持 iPad，将以 iPhone 模式显示。",
+              "lc.appSettings.selected32BitEmulator": "32 位模拟器",
+              "lc.settings.selected32BitEmulator": "默认 32 位模拟器",
+          }
+
+          added = []
+          for k, v in zh_additions.items():
+              if k not in zh_dict:
+                  zh_dict[k] = v
+                  added.append(k)
+
+          with open(zh_path, "wb") as f:
+              plistlib.dump(zh_dict, f, fmt=plistlib.FMT_BINARY)
+
+          missing = [k for k in en_dict if k not in zh_dict]
+          print(f"LiveContainer zh-Hans.lproj: {len(zh_dict)}/{len(en_dict)} keys (added={added}, missing={missing})")
+          assert not missing, f"Still missing zh-Hans keys: {missing}"
+
+          # Fix official build_github.sh Settings.bundle/Root.plist index-3 bug and localize Settings.bundle
+          settings_dir = os.path.join(lc_app, "Settings.bundle")
+          root_plist_path = os.path.join(settings_dir, "Root.plist")
+          clean_root = {
+              "StringsTable": "Root",
+              "PreferenceSpecifiers": [
+                  {
+                      "Type": "PSToggleSwitchSpecifier",
+                      "Title": "Wait For Debugger",
+                      "Key": "LCWaitForDebugger",
+                      "DefaultValue": False,
+                  },
+                  {
+                      "Type": "PSTextFieldSpecifier",
+                      "Title": "Selected Bundle",
+                      "Key": "selected",
+                  },
+                  {
+                      "Type": "PSToggleSwitchSpecifier",
+                      "Title": "Open SideStore",
+                      "Key": "LCOpenSideStore",
+                      "DefaultValue": False,
+                  },
+              ],
+          }
+          with open(root_plist_path, "wb") as f:
+              plistlib.dump(clean_root, f, fmt=plistlib.FMT_XML)
+
+          zh_settings_dir = os.path.join(settings_dir, "zh-Hans.lproj")
+          os.makedirs(zh_settings_dir, exist_ok=True)
+          root_strings = {
+              "Wait For Debugger": "等待调试器",
+              "Selected Bundle": "已选应用包",
+              "Open SideStore": "启动时打开内置 SideStore",
+          }
+          with open(os.path.join(zh_settings_dir, "Root.strings"), "wb") as f:
+              plistlib.dump(root_strings, f, fmt=plistlib.FMT_BINARY)
+          print("Patched Settings.bundle/Root.plist and added Settings.bundle/zh-Hans.lproj/Root.strings")
+          PY
+
+          plutil -lint "$LC_APP/zh-Hans.lproj/Localizable.strings"
+          plutil -lint "$LC_APP/Settings.bundle/Root.plist"
+          plutil -lint "$LC_APP/Settings.bundle/zh-Hans.lproj/Root.strings"
+
+          echo "=== 2. Embed SideStore-zh-CN as SideStoreApp.framework + dylibify + ldid ==="
+          rm -rf "$SS_FW"
+          mv lc_merge/ss_work/Payload/SideStore.app "$SS_FW"
+
+          lc_merge/tools/dylibify "$SS_FW/SideStore" "$SS_FW/SideStore.dylib"
+          rm -f "$SS_FW/SideStore"
+          mv "$SS_FW/SideStore.dylib" "$SS_FW/SideStore"
+          chmod +x "$SS_FW/SideStore"
+          ldid -S"" "$SS_FW/SideStore"
+          cp -f lc_merge/tools/LCAppInfo.plist "$SS_FW/LCAppInfo.plist"
+
+          echo "=== 3. Copy App Intents & Rebind Metadata.appintents to SideStoreSupport ==="
+          cp -f "$SS_FW/Intents.intentdefinition" "$LC_APP/Intents.intentdefinition"
+          cp -f "$SS_FW/ViewApp.intentdefinition" "$LC_APP/ViewApp.intentdefinition"
+          rm -rf "$LC_APP/Metadata.appintents"
+          cp -R "$SS_FW/Metadata.appintents" "$LC_APP/Metadata.appintents"
+
+          python3 - <<'PY'
+          path = "lc_merge/lc_work/Payload/LiveContainer.app/Metadata.appintents/extract.actionsdata"
+          with open(path, "rb") as f:
+              raw = f.read()
+
+          r1_old, r1_new = b"9SideStore20RefreshAllAppsIntentV", b"16SideStoreSupport20RefreshAllAppsIntentV"
+          r2_old, r2_new = b"9SideStore26RefreshAllAppsWidgetIntentV", b"16SideStoreSupport26RefreshAllAppsWidgetIntentV"
+
+          c1 = raw.count(r1_old)
+          c2 = raw.count(r2_old)
+          print(f"extract.actionsdata matches: RefreshAllAppsIntent={c1}, RefreshAllAppsWidgetIntent={c2}")
+          assert c1 > 0 and c2 > 0, "Expected SideStore intent mangled symbols not found in extract.actionsdata!"
+
+          updated = raw.replace(r1_old, r1_new).replace(r2_old, r2_new)
+          with open(path, "wb") as f:
+              f.write(updated)
+          PY
+
+          echo "=== 4. Move & Patch AltWidgetExtension -> LiveWidgetExtension.appex ==="
+          rm -rf "$WIDGET_APPEX"
+          mv "$SS_FW/PlugIns/AltWidgetExtension.appex" "$WIDGET_APPEX"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.kdt.livecontainer.LiveWidget" "$WIDGET_APPEX/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable LiveWidgetExtension" "$WIDGET_APPEX/Info.plist"
+          mv "$WIDGET_APPEX/AltWidgetExtension" "$WIDGET_APPEX/LiveWidgetExtension"
+          chmod +x "$WIDGET_APPEX/LiveWidgetExtension"
+          ldid -Slc_merge/tools/LiveWidgetExtension_adhoc.xml "$WIDGET_APPEX/LiveWidgetExtension"
+
+          echo "=== 5. Clean Stale _CodeSignature on Modified Bundles & Package IPA ==="
+          rm -rf "$LC_APP/_CodeSignature" "$WIDGET_APPEX/_CodeSignature" "$SS_FW/_CodeSignature"
+
+          (cd lc_merge/lc_work && zip -r -y -q ../../LiveContainer+SideStore-zh-CN-Nightly.ipa Payload -x "._*" -x ".DS_Store" -x "__MACOSX")
+          ls -lh LiveContainer+SideStore-zh-CN-Nightly.ipa
+
+      - name: Deep Verification & Zero-Private-Key Audit
+        run: |
+          set -euo pipefail
+          IPA="LiveContainer+SideStore-zh-CN-Nightly.ipa"
+          test -s "$IPA"
+          unzip -t "$IPA" >/dev/null
+
+          python3 - <<'PY'
+          import plistlib, struct, zipfile
+
+          ipa = "LiveContainer+SideStore-zh-CN-Nightly.ipa"
+          with zipfile.ZipFile(ipa) as z:
+              names = z.namelist()
+              print(f"IPA total entries: {len(names)}")
+
+              # 1. Zero pairing file / private key check
+              forbidden = [n for n in names if any(tok in n.lower() for tok in (
+                  "preinstalledpairing", ".mobiledevicepair", "pairingfile_lockdown", "pairingfile_remoterp"
+              ))]
+              assert not forbidden, f"FORBIDDEN pairing files found in public IPA: {forbidden}"
+
+              # 2. Verify LiveContainer Info.plist
+              lc_info = plistlib.loads(z.read("Payload/LiveContainer.app/Info.plist"))
+              assert lc_info["CFBundleIdentifier"] == "com.kdt.livecontainer"
+              assert "group.com.SideStore.SideStore" in lc_info.get("ALTAppGroups", [])
+              schemes = [s for item in lc_info.get("CFBundleURLTypes", []) for s in item.get("CFBundleURLSchemes", [])]
+              for expected_scheme in ("livecontainer", "sidestore", "sidestore-com.kdt.livecontainer"):
+                  assert expected_scheme in schemes, f"Missing URL scheme: {expected_scheme}"
+              print("OK: LiveContainer.app/Info.plist:", lc_info.get("CFBundleShortVersionString"), lc_info.get("LCVersionInfo"))
+
+              # 3. Verify Mach-O filetypes
+              def macho_filetype(entry):
+                  data = z.read(entry)
+                  magic, cputype, cpusubtype, filetype = struct.unpack("<IIII", data[:16])
+                  assert magic == 0xfeedfacf, f"Unexpected Mach-O magic for {entry}: 0x{magic:x}"
+                  return filetype
+
+              assert macho_filetype("Payload/LiveContainer.app/LiveContainer") == 2
+              assert macho_filetype("Payload/LiveContainer.app/Frameworks/SideStoreApp.framework/SideStore") == 6
+              assert macho_filetype("Payload/LiveContainer.app/PlugIns/LiveWidgetExtension.appex/LiveWidgetExtension") == 2
+              print("OK: Mach-O headers verified (LiveContainer=MH_EXECUTE, SideStore=MH_DYLIB, LiveWidgetExtension=MH_EXECUTE)")
+
+              # 4. Verify SideStoreApp.framework Info.plist & LCAppInfo.plist & binary strings
+              ss_info = plistlib.loads(z.read("Payload/LiveContainer.app/Frameworks/SideStoreApp.framework/Info.plist"))
+              assert ss_info["CFBundleIdentifier"] == "com.SideStore.SideStore"
+              assert ss_info.get("ALTAnisetteURL") == "https://mac-ani.jkcoxson.com", f"Unexpected ALTAnisetteURL: {ss_info.get('ALTAnisetteURL')}"
+              assert ss_info.get("CFBundleDevelopmentRegion") == "zh_CN"
+              lc_app_info = plistlib.loads(z.read("Payload/LiveContainer.app/Frameworks/SideStoreApp.framework/LCAppInfo.plist"))
+              assert lc_app_info.get("LCDataUUID") == "752B6522-37A4-404B-B0C6-8A37556C9F72"
+
+              ss_bin = z.read("Payload/LiveContainer.app/Frameworks/SideStoreApp.framework/SideStore")
+              for marker in (
+                  b"Mac OS X;10.12.6;16G29",
+                  b"akd/1.0 CFNetwork/811.5.4 Darwin/16.7.0",
+                  b"PreinstalledPairing",
+                  b"SideStoreNewsLocalizer",
+              ):
+                  assert marker in ss_bin, f"Missing expected marker in SideStore binary: {marker!r}"
+              print("OK: SideStoreApp.framework Info.plist, LCAppInfo.plist, and binary markers verified:", ss_info.get("CFBundleShortVersionString"))
+
+              # 5. Verify LiveWidgetExtension & AppIntents rebinding
+              w_info = plistlib.loads(z.read("Payload/LiveContainer.app/PlugIns/LiveWidgetExtension.appex/Info.plist"))
+              assert w_info["CFBundleIdentifier"] == "com.kdt.livecontainer.LiveWidget"
+              assert w_info["CFBundleExecutable"] == "LiveWidgetExtension"
+              actions = z.read("Payload/LiveContainer.app/Metadata.appintents/extract.actionsdata")
+              assert b"16SideStoreSupport20RefreshAllAppsIntentV" in actions
+              assert b"16SideStoreSupport26RefreshAllAppsWidgetIntentV" in actions
+              print("OK: LiveWidgetExtension & Metadata.appintents verified")
+
+              # 6. Verify LiveContainer zh-Hans 100% coverage & Settings.bundle
+              en_s = plistlib.loads(z.read("Payload/LiveContainer.app/en.lproj/Localizable.strings"))
+              zh_s = plistlib.loads(z.read("Payload/LiveContainer.app/zh-Hans.lproj/Localizable.strings"))
+              missing = [k for k in en_s if k not in zh_s]
+              assert not missing, f"Missing zh-Hans keys: {missing}"
+              root_s = plistlib.loads(z.read("Payload/LiveContainer.app/Settings.bundle/zh-Hans.lproj/Root.strings"))
+              assert "Open SideStore" in root_s
+              print(f"OK: LiveContainer zh-Hans coverage = {len(zh_s)}/{len(en_s)} (100%) + Settings.bundle localized")
+          PY
+
+          shasum -a 256 "$IPA"
+
+      - name: Upload LiveContainer+SideStore-zh-CN-Nightly.ipa Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LiveContainer+SideStore-zh-CN-Nightly.ipa
+          path: LiveContainer+SideStore-zh-CN-Nightly.ipa
+          if-no-files-found: error
+
+      - name: Upload Pure SideStore-zh-CN.ipa Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SideStore-zh-CN.ipa
+          path: SideStore-zh-CN.ipa
+          if-no-files-found: error
+
+      - name: Publish to GitHub Releases (Manual Option Only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == true }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REL_TAG="lc-sidestore-zh-nightly-${BUILD_NUM}"
+          cat > release-notes-lc-zh.md <<EOF
+          ## LiveContainer + SideStore 简体中文合体版（每夜构建）
+
+          - **内置 SideStore 版本**：\`${MARKETING_VERSION}\`（全量深度简体中文 + 预设稳定 Anisette + 根治 503 + 支持 \`iloader 2.4.2\` 双协议配对 + 支持本机可选注入 \`PreinstalledPairing.plist\`）
+          - **LiveContainer 基座**：官方 \`${LC_TAG}\`（全量简体中文 100% 补齐 + 一键「从内置 SideStore 导入证书」免 JIT）
+          - **隐私安全**：云端产物 100% 零配对文件、零私钥
+          - **构建提交**：\`${GITHUB_SHA}\`
+          EOF
+
+          gh release create "$REL_TAG" \
+            LiveContainer+SideStore-zh-CN-Nightly.ipa \
+            --title "LiveContainer + SideStore 简体中文合体版 (${MARKETING_VERSION})" \
+            --notes-file release-notes-lc-zh.md \
+            --target "${GITHUB_SHA}" \
+            --prerelease

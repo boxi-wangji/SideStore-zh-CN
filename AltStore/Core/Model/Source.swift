@@ -367,6 +367,8 @@ public extension Source
             return "SideStore 官方源"
         case "sidestore team picks":
             return "SideStore 官方精选"
+        case "livecontainer + sidestore":
+            return "LiveContainer + SideStore 官方源"
         default:
             return name
         }

@@ -299,10 +299,7 @@ final class PairingFileManager: NSObject {
             // load optional app-bundle preinstalled pairing resource (`PreinstalledPairing.plist`).
             if !hasPairingFile(),
                !UserDefaults.standard.bool(forKey: Self.explicitPairingResetDefaultsKey),
-               let bundledURL = Bundle.main.url(
-                   forResource: AppConstants.Pairing.preinstalledResourceName,
-                   withExtension: AppConstants.Pairing.preinstalledResourceExt
-               ),
+               let bundledURL = bundledPreinstalledPairingURL(),
                let bundledData = try? Data(contentsOf: bundledURL),
                let content = String(data: bundledData, encoding: .utf8) ?? String(data: bundledData, encoding: .isoLatin1),
                !content.isEmpty {
@@ -322,7 +319,7 @@ final class PairingFileManager: NSObject {
                             persistedActiveProtocol = primary.mode
                         }
                         UserDefaults.standard.set(bundledHash, forKey: Self.preinstalledPairingHashDefaultsKey)
-                        debugLog("[PairingFile] Auto-loaded bundled PreinstalledPairing.plist (\(primary.mode.rawValue), dual=\(dual)).")
+                        debugLog("[PairingFile] Auto-loaded bundled PreinstalledPairing.plist from \(bundledURL.path) (\(primary.mode.rawValue), dual=\(dual)).")
                         didImportOrActivate = true
                     }
                 }
@@ -330,6 +327,36 @@ final class PairingFileManager: NSObject {
 
             return didImportOrActivate
         }
+    }
+
+    private nonisolated func bundledPreinstalledPairingURL() -> URL? {
+        let name = AppConstants.Pairing.preinstalledResourceName
+        let ext = AppConstants.Pairing.preinstalledResourceExt
+
+        // 1. Main bundle (standalone SideStore.app or LiveContainer's Frameworks/SideStoreApp.framework)
+        if let url = Bundle.main.url(forResource: name, withExtension: ext) {
+            return url
+        }
+        // 2. Active host bundle (e.g. LiveContainer.app root when running as built-in SideStore)
+        if let url = Bundle.Info.activeBundle.url(forResource: name, withExtension: ext) {
+            return url
+        }
+        // 3. Direct path fallbacks for both standalone and LiveContainer-embedded layouts
+        let fileName = "\(name).\(ext)"
+        let candidateURLs: [URL] = [
+            Bundle.main.bundleURL.appendingPathComponent(fileName),
+            Bundle.Info.activeBundleURL.appendingPathComponent(fileName),
+            Bundle(for: PairingFileManager.self).bundleURL.appendingPathComponent(fileName),
+            Bundle.main.bundleURL
+                .deletingLastPathComponent()
+                .deletingLastPathComponent()
+                .appendingPathComponent(fileName),
+        ]
+        let fm = FileManager.default
+        for candidate in candidateURLs where fm.fileExists(atPath: candidate.path) {
+            return candidate
+        }
+        return nil
     }
 
     func deletePairingFile(for mode: PairingProtocol) {

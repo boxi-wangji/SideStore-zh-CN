@@ -233,6 +233,16 @@ public enum SideStoreNewsLocalizer
         "3speak-tv-acela-download-2022-12-08": Entry(
             title: "3Speak.tv Acela 现已开放下载",
             caption: "3Speak.tv Acela 客户端现已上架。"
+        ),
+
+        // https://github.com/LiveContainer/LiveContainer/releases/download/1.0/apps_ss_lc.json (LiveContainer + SideStore source)
+        "release-3.6.0": Entry(
+            title: "LiveContainer 3.6.0 现已发布",
+            caption: "LiveContainer 新版本已发布！"
+        ),
+        "release-3.6.1": Entry(
+            title: "LiveContainer 3.6.1 现已发布",
+            caption: "LiveContainer 新版本已发布！"
         )
     ]
 
@@ -271,7 +281,8 @@ public enum SideStoreNewsLocalizer
         "find out how you can help support those impacted by the russian invasion.": "了解如何向受冲突影响的人群提供支持与帮助。",
         "simply go to the browse tab below to access app sources we vet and keep up to date.": "前往下方「浏览」标签页，即可访问经官方审核并持续维护的软件源。",
         "install any ios app directly from files by tapping the + in the my apps tab.": "在「我的应用」页面点击左上角「+」，即可直接从「文件」安装任意 iOS 应用。",
-        "please welcome provenance and pojavlauncher to altstore 🎉": "欢迎 Provenance 与 PojavLauncher 入驻软件源 🎉"
+        "please welcome provenance and pojavlauncher to altstore 🎉": "欢迎 Provenance 与 PojavLauncher 入驻软件源 🎉",
+        "update of livecontainer just got released!": "LiveContainer 新版本已发布！"
     ]
 
     public static func localizedTitle(for newsItem: NewsItem) -> String {
@@ -300,6 +311,11 @@ public enum SideStoreNewsLocalizer
         // Generic pattern: "SideStore X.Y.Z ..."
         if let versionTitle = formatSideStoreVersionTitle(title) {
             return versionTitle
+        }
+
+        // Generic pattern: "X.Y.Z - LiveContainer ..."
+        if let lcVersionTitle = formatLiveContainerVersionTitle(title) {
+            return lcVersionTitle
         }
 
         // Generic pattern: "Error 0x..."
@@ -387,5 +403,17 @@ public enum SideStoreNewsLocalizer
             return "SideStore \(version) 现已发布"
         }
         return "SideStore \(version)"
+    }
+
+    private static func formatLiveContainerVersionTitle(_ title: String) -> String? {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let pattern = #"^v?(\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9.\-]+)?)\s*-\s*livecontainer\b.*$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+              let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
+              let versionRange = Range(match.range(at: 1), in: trimmed) else {
+            return nil
+        }
+        let version = String(trimmed[versionRange])
+        return "LiveContainer \(version) 现已发布"
     }
 }
